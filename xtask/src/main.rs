@@ -16,7 +16,7 @@ struct Arguments {
 enum Action {
     Run(RunConfig),
     Build(BuildConfig),
-    LLVM(LlvmConfig),
+    Llvm(LlvmConfig),
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -54,7 +54,7 @@ fn main() -> anyhow::Result<()> {
             let path = xtask::extract_binary(elf)?;
             xtask::run(path)?;
         }
-        Action::LLVM(cfg) => {
+        Action::Llvm(cfg) => {
             xtask::run_llvm_tool(args.release, &cfg.tool, cfg.rest)?;
         }
     }
