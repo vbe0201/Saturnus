@@ -8,9 +8,11 @@ use xshell::cmd;
 pub fn run(binary: PathBuf) -> Result<()> {
     cmd!(
         "qemu-system-aarch64
+            -cpu cortex-a57
             -machine virt
             -nographic
-            -drive format=raw,file={binary}"
+            -semihosting-config enable=on,target=native
+            -kernel {binary}"
     )
     .run()?;
     Ok(())
