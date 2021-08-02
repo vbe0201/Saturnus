@@ -3,3 +3,7 @@ members = [
   "xtask",
   "kernel",
 ]
+
+[profile.release]
+opt-level = "s"
+lto = "fat"
