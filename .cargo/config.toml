@@ -1,2 +1,3 @@
 [alias]
 xtask = "run --release -p xtask --"
+llvm = "run --release -p xtask -- --release llvm --"

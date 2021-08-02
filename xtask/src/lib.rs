@@ -55,6 +55,16 @@ pub fn extract_binary(elf: PathBuf) -> Result<PathBuf> {
     Ok(output)
 }
 
+/// Run the given llvm tool on the produced kernel file with the given arguments.
+pub fn run_llvm_tool(release: bool, tool: &str, args: Vec<String>) -> Result<()> {
+    let kernel = build(release)?;
+    let tool_bin = llvm_tool(tool)?;
+    cmd!("{tool_bin} {kernel} {args...}")
+        .echo_cmd(false)
+        .run()?;
+    Ok(())
+}
+
 /// Returns the path to the root of the workspace.
 fn root() -> PathBuf {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

@@ -49,6 +49,9 @@ dependencies = [
 [[package]]
 name = "kernel"
 version = "0.1.0"
+dependencies = [
+ "qemu-exit",
+]
 
 [[package]]
 name = "proc-macro2"
@@ -58,6 +61,12 @@ checksum = "5c7ed8b8c7b886ea3ed7dde405212185f423ab44682667c8c6dd14aa1d9f6612"
 dependencies = [
  "unicode-xid",
 ]
+
+[[package]]
+name = "qemu-exit"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "220eb94f40665452ab6114bf8a8d86aa1fd41c6dbfaa4ab71b5912c8adb80389"
 
 [[package]]
 name = "quote"
