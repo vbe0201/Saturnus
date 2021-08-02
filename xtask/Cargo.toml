@@ -1,0 +1,12 @@
+cargo-features = ["edition2021"]
+
+[package]
+name = "xtask"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+xshell = "0.1"
+anyhow = "1"
+argh = "0.1"
+rustc_version = "0.4"

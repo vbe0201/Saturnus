@@ -1,9 +1,2 @@
-[build]
-target = "targets/aarch64-saturnus-none.json"
-
-[unstable]
-build-std = ["core", "alloc", "compiler_builtins"]
-build-std-features = ["compiler-builtins-mem"]
-
-[target.aarch64-saturnus-none]
-runner = "scripts/qemu.sh"
+[alias]
+xtask = "run --release -p xtask --"
