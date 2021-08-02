@@ -1,7 +1,9 @@
 [workspace]
 members = [
-  "xtask",
   "kernel",
+  "kernel/loader",
+
+  "xtask",
 ]
 
 [profile.release]
