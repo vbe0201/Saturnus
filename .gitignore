@@ -1,0 +1,27 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Miscellaneous system files
+.DS_Store
+*~
+._*
+.env
+Thumbs.db
+
+# Editor files
+/.vs/
+/.vscode/
+/.idea/
+
+# Binaries
+*.bin
+
+# IDA files
+*.id0
+*.id1
+*.id2
+*.idb
+*.i64
+*.nam
+*.til
