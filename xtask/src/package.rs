@@ -32,3 +32,8 @@ pub fn find_package(name: &str) -> Option<Package> {
         .find(|p| p.name.eq_ignore_ascii_case(name))
         .cloned()
 }
+
+/// Return an iterator over all available packages.
+pub fn all_packages() -> impl Iterator<Item = Package> {
+    PACKAGES.iter().cloned()
+}

@@ -51,11 +51,37 @@ pub fn extract_binary(elf: PathBuf) -> Result<PathBuf> {
 }
 
 /// Run the given llvm tool on the produced kernel file with the given arguments.
-pub fn run_llvm_tool(release: bool, pkg: Package, tool: &str, args: Vec<String>) -> Result<()> {
+pub fn run_llvm_tool(release: bool, pkg: Package, tool: &str, args: &[String]) -> Result<()> {
     let kernel = build_package(release, pkg)?;
     let tool_bin = rustc::llvm_tool(tool)?;
     cmd!("{tool_bin} {kernel} {args...}")
         .echo_cmd(false)
         .run()?;
+    Ok(())
+}
+
+/// Lint and format the given package.
+pub fn lint(check: bool, pkg: Package) -> Result<()> {
+    let _cwd = xshell::pushd(rustc::root_dir());
+
+    let Package {
+        cargo_name, target, ..
+    } = pkg;
+
+    cmd!(
+        "cargo clippy
+            -p {cargo_name}
+            --target {target}
+            -Zbuild-std=core,alloc,compiler_builtins"
+    )
+    .run()?;
+
+    let check_arg = if check { &["--", "--check"][..] } else { &[] };
+    cmd!(
+        "cargo fmt
+            -p {cargo_name} {check_arg...}"
+    )
+    .run()?;
+
     Ok(())
 }
