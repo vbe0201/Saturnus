@@ -6,7 +6,7 @@
   "dynamic-linking": false,
   "env": "",
   "executables": true,
-  "features": "+a57,+crc,+crypto,+strict-align,-fp-armv8",
+  "features": "+a57,+crc,+crypto,+strict-align",
   "is-builtin": false,
   "has-elf-tls": false,
   "has-rpath": false,
@@ -22,16 +22,10 @@
   "target-c-int-width": "32",
   "target-endian": "little",
   "target-pointer-width": "64",
-  "unsupported-abis": [
-    "stdcall",
-    "fastcall",
-    "vectorcall",
-    "thiscall",
-    "win64",
-    "sysv64"
-  ],
   "vendor": "saturnus",
   "pre-link-args": {
-    "ld.lld": ["-Tlinker-scripts/loader.ld"]
+    "ld.lld": [
+      "-Tlink.ld"
+    ]
   }
 }
