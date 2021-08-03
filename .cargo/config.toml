@@ -1,3 +1,6 @@
 [alias]
 xtask = "run --release -p xtask --"
-llvm = "run --release -p xtask -- --release llvm --"
+
+# Aliases for packages
+kernel = "xtask -p kernel"
+loader = "xtask -p loader"
