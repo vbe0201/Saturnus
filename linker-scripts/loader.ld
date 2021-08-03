@@ -15,7 +15,7 @@ SECTIONS
 
   .text : {
     HIDDEN(__text_start__ = .);
-    KEEP(*(.text.crt0))
+    KEEP(*(.text.r0))
     *(.text .text.*)
     HIDDEN(__text_end__ = .);
   } :loader
