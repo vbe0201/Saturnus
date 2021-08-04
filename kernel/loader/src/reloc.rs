@@ -6,6 +6,10 @@ use goblin::elf64::{
     reloc::{self, Rel, Rela},
 };
 
+extern "C" {
+    static __dynamic_start__: *const u8;
+}
+
 // This does not correspond to real program headers, and instead is needed because `goblin`
 // can't translate addresses otherwise. We need to supply a real base here or otherwise we
 // will end up producing broken relocations.
@@ -37,18 +41,27 @@ unsafe fn count_dynamic_entries<'d>(section_start: *const u8) -> &'d [Dyn] {
 }
 
 /// The result of a [`relocation`](relocate) operation.
-#[repr(i32)]
 #[derive(Debug, Clone, Copy)]
+#[repr(i32)]
 pub enum RelocationResult {
-    /// The relocation was successful
+    /// The relocation was successful.
     Ok = 0,
-    /// Found a relocation type that is not supported at the moment
+    /// Found a relocation type that is not architecture-relative.
     UnsupportedRelocation,
 }
 
-/// Apply relocations to the given base address by reading the given `.dynamic` section.
+/// Applies relocations to all entries of the given `.dynamic` section, using `base`
+/// as the starting point.
+///
+/// # Safety
+///
+/// - `base` must point to the very start of code that got linked into the binary.
+/// - `dynamic` must point to the address provided by the `_DYNAMIC` linker symbol.
 #[allow(unsafe_op_in_unsafe_fn)]
 pub unsafe extern "C" fn relocate(base: *mut u8, dynamic: *const u8) -> RelocationResult {
+    assert!(dynamic > base as *const u8);
+    assert!(__dynamic_start__ <= dynamic);
+
     // Extract all relevant information from the `.dynamic` section.
     let dynamic_info = {
         let dynamic = count_dynamic_entries(dynamic);
