@@ -99,7 +99,7 @@ SECTIONS
 
   __data_end__ = .;
 
-  .bss ALIGN(8) : {
+  .bss ALIGN(16) : {
     HIDDEN(__bss_start__ = .);
     *(.bss .bss.*)
     *(COMMON)

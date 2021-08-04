@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
-#![feature(asm, naked_functions, option_get_or_insert_default)]
-#![deny(rustdoc::broken_intra_doc_links, unsafe_op_in_unsafe_fn)]
+#![feature(asm, global_asm, naked_functions, option_get_or_insert_default)]
+#![deny(unsafe_op_in_unsafe_fn, rustdoc::broken_intra_doc_links)]
 
 #[macro_use]
 extern crate static_assertions;
@@ -9,10 +9,20 @@ extern crate static_assertions;
 mod panic;
 mod reloc;
 
+// The program entrypoint which forwards execution as-is into [`main`].
+global_asm!(
+    r#"
+    .section .text.r0, "ax", %progbits
+    .global _start
+    _start:
+        b main
+"#
+);
+
 /// Address mappings of all relevant kernel segments in physical memory.
 ///
-/// This is passed to [`main`] in order to relocate and randomize all the kernel segments
-/// after enabling KASLR.
+/// This is passed to [`main`] in order to relocate and randomize all the kernel mappings
+/// in memory after enabling KASLR.
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
 struct KernelMap {
@@ -44,62 +54,55 @@ struct KernelMap {
 
 assert_eq_size!(KernelMap, [u8; 0x30]);
 
-// The program entrypoint which forwards execution as-is into [`r0::main`].
-#[naked]
-#[no_mangle]
-#[link_section = ".text.r0"]
-#[allow(unsafe_op_in_unsafe_fn)]
-unsafe extern "C" fn _start(
-    _kernel_base: usize,
-    _kernel_map: *const KernelMap,
-    _ini1_base: usize,
-) -> ! {
-    asm!(
-        "b {}",
-        sym main,
-        options(noreturn)
-    )
-}
-
 /// The entrypoint to the Kernel Loader application.
 ///
 /// This is called by the Kernel's r0 to enable KASLR, apply kernel relocations and randomize the
 /// memory mapping of all kernel segments prior to handing execution back to the kernel itself.
-#[naked]
 #[allow(unsafe_op_in_unsafe_fn)]
+#[naked]
+#[no_mangle]
 unsafe extern "C" fn main(
-    _kernel_base: usize,
-    _kernel_map: *const KernelMap,
-    _ini1_base: usize,
+    /* x0 */ _kernel_base: usize,
+    /* x1 */ _kernel_map: *const KernelMap,
+    /* x2 */ _ini1_base: usize,
 ) -> ! {
     asm!(
-        "
-        // Load bss start and end addresses into `x3` and `x4`
-        ldr x3, =__bss_start__
-        ldr x4, =__bss_end__
+        r#"
+        .macro REL_ADR register, symbol
+            adrp \register, \symbol
+            add  \register, \register, #:lo12:\symbol
+        .endm
 
-        // Loop over every byte pair in the bss section and write 0 to it.
+        REL_ADR x16, __bss_start__
+        REL_ADR x17, __bss_end__
+
+        // Clear every byte pair in the .bss segment.
     1:
-        cmp x3, x4
+        cmp x16, x17
         b.eq 2f
-        stp xzr, xzr, [x3], #16
+        stp xzr, xzr, [x16], #0x10
         b 1b
 
-        // Load stack pointer, which is end of bss section, because that's
-        // where our stack lives (see `linker-scripts/loader.ld`)
+        // Point sp to the end of the .bss segment, where our stack begins.
     2:
-        mov sp, x3
+        mov sp, x17
 
-        // Relocate the loader by calling `reloc::relocate` with our base address,
-        // and the start of the `.dynamic` section
-        ldr x0, =__start__
-        ldr x1, =__dynamic_start__
-        bl {reloc}
+        // Back up our arguments and the link register on the stack.
+        sub sp, sp, #0x20
+        stp x0, x1,  [sp, #0x00] // Store `kernel_base` and `kernel_map`.
+        stp x2, x30, [sp, #0x10] // Store `ini1_base` and link register.
 
-        // Exit QEMU using semihosting
-    3:  mov x0, #0x18
-        hlt #0xF000",
-        reloc = sym reloc::relocate,
+        // Apply all dynamic relocations to ourselves.
+        adr x0, _start
+        REL_ADR x1, _DYNAMIC
+        bl {apply_relocations}
+
+        // Exit QEMU using semihosting.
+    3:
+        mov x0, #0x18
+        hlt #0xF000
+    "#,
+        apply_relocations = sym reloc::relocate,
         options(noreturn)
     )
 }
