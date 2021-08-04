@@ -97,10 +97,27 @@ unsafe extern "C" fn main(
         REL_ADR x1, _DYNAMIC
         bl {apply_relocations}
 
-        // Exit QEMU using semihosting.
+        // Check if relocations were successful
+        cmp x0, xzr
+        b.ne 100f
+
+        // Run constructors in `.init_array` section
+        REL_ADR x16, __init_array_start__
+        REL_ADR x17, __init_array_end__
     3:
+        cmp x16, x17
+        b.eq 4f
+        ldr x18, [x16], #16
+        blr x18
+        b 3b
+
+    4:
+        // Exit QEMU using semihosting.
         mov x0, #0x18
         hlt #0xF000
+
+        // Infinite loop indicating an error while loading the kernel
+  100:  b 100b
     "#,
         apply_relocations = sym reloc::relocate,
         options(noreturn)
