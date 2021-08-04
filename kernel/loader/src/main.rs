@@ -90,15 +90,10 @@ unsafe extern "C" fn main(
     2:
         mov sp, x3
 
-        // Relocate the loader if the `.dynamic` section is not empty,
-        // by calling `reloc::relocate` with our base address,
+        // Relocate the loader by calling `reloc::relocate` with our base address,
         // and the start of the `.dynamic` section
         ldr x0, =__start__
         ldr x1, =__dynamic_start__
-        ldr x8, =__dynamic_end__
-
-        cmp x1, x8
-        b.eq 3f
         bl {reloc}
 
         // Exit QEMU using semihosting

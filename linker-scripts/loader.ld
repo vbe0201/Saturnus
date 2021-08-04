@@ -48,7 +48,6 @@ SECTIONS
   .dynamic : {
     HIDDEN(__dynamic_start__ = .);
     *(.dynamic)
-    HIDDEN(__dynamic_end__ = .);
   } :loader :dynamic
 
   /* All exception handling sections. */
