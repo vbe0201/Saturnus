@@ -1,5 +1,3 @@
-//! Implementation of the relocation process.
-
 use core::slice;
 
 use goblin::elf64::{
