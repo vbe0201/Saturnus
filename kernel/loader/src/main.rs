@@ -6,6 +6,7 @@
 #[macro_use]
 extern crate static_assertions;
 
+mod exception;
 mod panic;
 mod reloc;
 
@@ -110,8 +111,16 @@ unsafe extern "C" fn main(
         ldr x18, [x16], #16
         blr x18
         b 3b
-
     4:
+
+        // Clear TPIDR_EL1 and set VBAR_EL1 to the exception vector table
+        msr TPIDR_EL1, xzr
+
+        // FIXME: `REL_ADDR` macro doesn't work with asm operand
+        adrp x16, {exception_vector_table}
+        add  x16, x16, #:lo12:{exception_vector_table}
+        msr VBAR_EL1, x16
+
         // Exit QEMU using semihosting.
         mov x0, #0x18
         hlt #0xF000
@@ -120,6 +129,7 @@ unsafe extern "C" fn main(
   100:  b 100b
     "#,
         apply_relocations = sym reloc::relocate,
+        exception_vector_table = sym exception::EXCEPTION_TABLE,
         options(noreturn)
     )
 }
