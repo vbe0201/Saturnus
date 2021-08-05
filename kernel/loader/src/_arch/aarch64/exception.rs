@@ -189,7 +189,7 @@ impl fmt::Display for SpsrEl1 {
 
 #[inline]
 fn alternating_newline(i: usize) -> &'static str {
-    if i % 3 == 0 {
+    if i % 2 == 0 {
         "   "
     } else {
         "\n"
