@@ -11,8 +11,12 @@ fn interrupt_free<R>(f: impl FnOnce() -> R) -> R {
     // Disable interrupts.
     let daif_old: u64;
     unsafe {
-        llvm_asm!("mrs $0, daif" : "=r"(daif_old) ::: "volatile");
-        llvm_asm!("msr daifset, #2" ::: "memory" : "volatile");
+        asm!(
+            "mrs {}, daif",
+            "msr daifset, #2",
+            out(reg) daif_old,
+
+        );
     }
 
     let ret = f();
@@ -20,8 +24,8 @@ fn interrupt_free<R>(f: impl FnOnce() -> R) -> R {
     // Re-enable interrupts.
     let cur_daif: u64;
     unsafe {
-        llvm_asm!("mrs $0, daif" : "=r"(cur_daif) ::: "volatile");
-        llvm_asm!("msr daif, $0" :: "r"(((cur_daif & !0x80) as u32) | (daif_old & 0x80) as u32) :: "volatile");
+        asm!("mrs {}, daif", out(reg) cur_daif);
+        asm!("msr daif, {:x}", in(reg) ((cur_daif & !0x80) as u32) | (daif_old & 0x80) as u32);
     }
 
     ret

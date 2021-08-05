@@ -37,7 +37,7 @@
 //! [pdf]: http://infocenter.arm.com/help/topic/com.arm.doc.dui0471e/DUI0471E_developing_for_arm_processors.pdf
 
 #![no_std]
-#![feature(llvm_asm)]
+#![feature(asm)]
 #![deny(unsafe_op_in_unsafe_fn, rustdoc::broken_intra_doc_links)]
 
 #[macro_use]
@@ -68,6 +68,13 @@ pub unsafe fn syscall<T>(nr: usize, arg: &T) -> usize {
 /// - `arg` must be an address that points to a valid argument block.
 #[inline(always)]
 pub unsafe fn syscall1(mut nr: usize, arg: usize) -> usize {
-    llvm_asm!("HLT #0xF000" : "+{x0}"(nr) : "{x1}"(arg) : "memory", "lr" : "volatile");
+    unsafe {
+        asm!(
+            "hlt #0xF000",
+            inout("x0") nr => nr,
+            in("x1") arg,
+            out("lr") _,
+        );
+    }
     nr
 }
