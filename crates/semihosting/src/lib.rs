@@ -43,6 +43,7 @@
 #[macro_use]
 mod macros;
 
+pub mod debug;
 #[doc(hidden)]
 pub mod export;
 pub mod host;
