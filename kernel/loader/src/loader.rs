@@ -1,5 +1,16 @@
 use core::ptr;
 
+/// The maximum size of the INI1 section (12 MiB).
+pub const MAX_INI1_SIZE: usize = 12 << 20;
+
+/// The amount of bytes that will be reserved for the kernel to use and
+/// thus won't be overwritten by the loader.
+pub const KERNEL_DATA_SIZE: usize = 0x1728000;
+
+/// Amount of memory that will be reserved *additionally* to the [`KERNEL_DATA_SIZE`] if
+/// the kernel requests a larger amount reserved data.
+pub const ADDITIONAL_KERNEL_DATA_SIZE: usize = 0x68000;
+
 /// Address mappings of all relevant kernel segments in physical memory.
 ///
 /// This is passed to [`main`] in order to relocate and randomize all the kernel mappings
@@ -73,18 +84,19 @@ pub unsafe extern "C" fn load_kernel(kbase: usize, kmap: &KernelMap, ini1_base: 
     assert!(kmap.data_end & 0xFFF != 0, "data_end is not aligned");
 
     // reserve 0x68000 extra bytes if requested by the kernel
-    let reserved_data_size = 0x1728000 + should_reserve_additional_data() as usize * 0x68000;
+    let reserved_data_size =
+        KERNEL_DATA_SIZE + should_reserve_additional_data() as usize * ADDITIONAL_KERNEL_DATA_SIZE;
 
     // calculate addresses where to place INI1
     let ini1_end = kbase as usize + kmap.ini1 as usize + reserved_data_size;
-    let ini1_start = ini1_end - 0xC00000;
+    let ini1_start = ini1_end - MAX_INI1_SIZE;
 
     // relocate INI1 if it isn't in the right spot
     if ini1_start != ini1_base {
         // validate the INI1 binary by checking magic number and size
         let header = unsafe { &*(ini1_base as *const InitialProcessBinaryHeader) };
 
-        if header.magic == INI1_MAGIC && header.size <= 0xC00000 {
+        if header.magic == INI1_MAGIC && header.size as usize <= MAX_INI1_SIZE {
             // valid INI1 binary, relocate!
             unsafe {
                 ptr::copy(
