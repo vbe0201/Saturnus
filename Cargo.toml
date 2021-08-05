@@ -1,9 +1,11 @@
 [workspace]
 members = [
-  "kernel",
-  "kernel/loader",
+    "crates/*",
 
-  "xtask",
+    "kernel",
+    "kernel/loader",
+
+    "xtask",
 ]
 
 [profile.release]

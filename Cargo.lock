@@ -102,6 +102,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "saturnus-semihosting"
+version = "0.1.0"
+
+[[package]]
 name = "scroll"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
