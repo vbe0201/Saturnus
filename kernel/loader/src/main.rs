@@ -88,6 +88,12 @@ unsafe extern "C" fn main(
         // Fill out the global exception vector table
         bl {setup_exception_table}
 
+        // Load the kernel binary
+        ldp x0, x1,  [sp, #0x00] // Load `kernel_base` and `kernel_map`.
+        ldp x2, x30, [sp, #0x10] // Load `ini1_base` and link register.
+        add sp, sp, #0x20
+        bl {load_kernel}
+
         // Exit QEMU using semihosting.
         mov x0, #0x18
         hlt #0xF000
@@ -95,6 +101,7 @@ unsafe extern "C" fn main(
         apply_relocations = sym reloc::relocate,
         call_init_array = sym call_init_array,
         setup_exception_table = sym exception::setup_exception_table,
+        load_kernel = sym loader::load_kernel,
         options(noreturn)
     )
 }
