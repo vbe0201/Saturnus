@@ -12,11 +12,14 @@ extern crate static_assertions;
 mod static_cell;
 pub use static_cell::StaticCell;
 
+#[macro_use]
+mod macros;
+
 mod exception;
 mod loader;
 mod page_allocator;
 mod panic;
-mod reloc;
+mod rt;
 
 use core::{mem, slice};
 use loader::KernelMap;
@@ -104,34 +107,10 @@ unsafe extern "C" fn main(
         mov x0, #0x18
         hlt #0xF000
     "#,
-        apply_relocations = sym reloc::relocate,
-        call_init_array = sym call_init_array,
+        apply_relocations = sym rt::relocate,
+        call_init_array = sym rt::call_init_array,
         setup_exception_table = sym exception::setup_exception_table,
         load_kernel = sym loader::load_kernel,
         options(noreturn)
     )
-}
-
-/// Uniformly calls all the functions in the `.init_array` segment.
-///
-/// The `.init_array` functions of the program must be defined with
-/// the [`init_array`] macro to get linked into the segment.
-///
-/// [`init_array`]: macro.init_array.html
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn call_init_array() {
-    extern "C" {
-        static __init_array_start__: unsafe extern "C" fn();
-        static __init_array_end__: unsafe extern "C" fn();
-    }
-
-    // Calculate the amount of pointers that the .init_array segment holds.
-    let init_array_length = (&__init_array_end__ as *const _ as usize
-        - &__init_array_start__ as *const _ as usize)
-        / mem::size_of::<unsafe extern "C" fn()>();
-
-    // Compose a slice of all the function pointers in the segment and call them separately.
-    for ptr in slice::from_raw_parts(&__init_array_start__, init_array_length) {
-        ptr();
-    }
 }

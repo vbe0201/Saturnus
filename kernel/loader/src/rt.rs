@@ -1,29 +1,23 @@
-use core::slice;
+use core::{mem, slice};
 
 use goblin::elf64::{
     dynamic::{self, Dyn, DynamicInfo},
-    program_header::{self, ProgramHeader},
+    program_header::{self as ph, ProgramHeader},
     reloc::{self, Rel, Rela},
 };
 
-extern "C" {
-    static __dynamic_start__: *const u8;
-}
-
-// This does not correspond to real program headers, and instead is needed because `goblin`
-// can't translate addresses otherwise. We need to supply a real base here or otherwise we
-// will end up producing broken relocations.
+// This does not correspond to real program headers, and instead is needed because
+// `goblin` can't translate addresses otherwise. We need to supply a real base here
+// or otherwise we will end up producing broken relocations.
 #[inline(always)]
-fn make_phdr_for_address_translation(base: u64) -> ProgramHeader {
+fn make_phdr_for_address_translation(base: usize) -> ProgramHeader {
     ProgramHeader {
-        p_type: program_header::PT_LOAD,
-        p_flags: program_header::PF_R | program_header::PF_W | program_header::PF_X,
-        p_offset: base,
-        p_vaddr: 0,
-        p_paddr: 0,
+        p_type: ph::PT_LOAD,
+        p_flags: ph::PF_R | ph::PF_W | ph::PF_X,
+        p_offset: base as u64,
         p_filesz: u64::MAX,
         p_memsz: u64::MAX,
-        p_align: 0,
+        ..ProgramHeader::default()
     }
 }
 
@@ -41,7 +35,7 @@ unsafe fn count_dynamic_entries<'d>(section_start: *const u8) -> &'d [Dyn] {
 }
 
 /// The result of a [`relocation`](relocate) operation.
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(i32)]
 pub enum RelocationResult {
     /// The relocation was successful.
@@ -55,17 +49,16 @@ pub enum RelocationResult {
 ///
 /// # Safety
 ///
-/// - `base` must point to the very start of code that got linked into the binary.
+/// - `base` mut point to the very start of code that got linked into the binary.
 /// - `dynamic` must point to the address provided by the `_DYNAMIC` linker symbol.
 #[allow(unsafe_op_in_unsafe_fn)]
 pub unsafe extern "C" fn relocate(base: *mut u8, dynamic: *const u8) -> RelocationResult {
     assert!(dynamic > base as *const u8);
-    assert!(__dynamic_start__ <= dynamic);
 
     // Extract all relevant information from the `.dynamic` section.
     let dynamic_info = {
         let dynamic = count_dynamic_entries(dynamic);
-        let phdrs = &[make_phdr_for_address_translation(base as usize as u64)][..];
+        let phdrs = &[make_phdr_for_address_translation(base as usize)][..];
 
         DynamicInfo::new(dynamic, phdrs)
     };
@@ -107,4 +100,30 @@ pub unsafe extern "C" fn relocate(base: *mut u8, dynamic: *const u8) -> Relocati
     }
 
     RelocationResult::Ok
+}
+
+/// Uniformly calls all the functions in the `.init_array` segment.
+///
+/// The `.init_array` functions are called before [`crate::main`].
+///
+/// # Safety
+///
+/// The linker must provide pointer-aligned `__init_array_start__` and
+/// `__init_array_end__` symbols which span the entire `.init_array` section.
+#[allow(unsafe_op_in_unsafe_fn)]
+pub unsafe extern "C" fn call_init_array() {
+    extern "C" {
+        static __init_array_start__: unsafe extern "C" fn();
+        static __init_array_end__: unsafe extern "C" fn();
+    }
+
+    // Calculate the amount of pointers that the segment holds.
+    let init_array_len = (&__init_array_end__ as *const _ as usize
+        - &__init_array_start__ as *const _ as usize)
+        / mem::size_of::<unsafe extern "C" fn()>();
+
+    // Compose a slice of all the function pointers and call them.
+    for ptr in slice::from_raw_parts(&__init_array_start__, init_array_len) {
+        ptr();
+    }
 }
