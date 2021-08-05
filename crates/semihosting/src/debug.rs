@@ -10,14 +10,12 @@
 //! ```no_run
 //! use saturnus_semihosting::debug::{self, EXIT_SUCCESS, EXIT_FAILURE};
 //!
-//! fn main() {
-//!     if 2 == 2 {
-//!         // Report success.
-//!         debug::exit(EXIT_SUCCESS);
-//!     } else {
-//!         // Report failure.
-//!         debug::exit(EXIT_FAILURE);
-//!     }
+//! if 2 == 2 {
+//!     // Report success.
+//!     debug::exit(EXIT_SUCCESS);
+//! } else {
+//!     // Report failure.
+//!     debug::exit(EXIT_FAILURE);
 //! }
 //! ```
 
@@ -80,5 +78,7 @@ pub fn exit(status: ExitStatus) {
 /// that the application continues. In this case, this call returns normally.
 pub fn report_exception(reason: Exception) {
     let code = reason as usize;
-    unsafe { syscall1!(REPORT_EXCEPTION, code) }
+    unsafe {
+        syscall1!(REPORT_EXCEPTION, code);
+    }
 }

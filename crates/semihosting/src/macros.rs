@@ -11,7 +11,7 @@ macro_rules! syscall {
 }
 
 /// Macro version of `syscall1`.
-#[macro_use]
+#[macro_export]
 macro_rules! syscall1 {
     ($nr:ident, $a1:expr) => {
         $crate::syscall1($crate::ops::$nr, $a1 as usize)

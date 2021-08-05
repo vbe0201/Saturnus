@@ -12,11 +12,13 @@ pub struct HostStream {
 
 impl HostStream {
     /// Attempts to construct a new handle to the host's standard output and returns it.
+    #[allow(clippy::result_unit_err)]
     pub fn stdout() -> Result<Self, ()> {
         open(":tt\0", ops::open::W_TRUNC)
     }
 
     /// Attempts to construct a new handle to the host's standard error and returns it.
+    #[allow(clippy::result_unit_err)]
     pub fn stderr() -> Result<Self, ()> {
         // There is actually no stderr access in ARM Semihosting documentation.
         // Use convention used in libgloss:
@@ -25,6 +27,7 @@ impl HostStream {
     }
 
     /// Attempts to write the entire `buffer` into this sink.
+    #[allow(clippy::result_unit_err)]
     pub fn write_all(&mut self, buffer: &[u8]) -> Result<(), ()> {
         write_all(self.fd, buffer)
     }

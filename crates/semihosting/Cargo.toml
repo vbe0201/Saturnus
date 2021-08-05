@@ -10,6 +10,5 @@ repository = "https://github.com/vbe0201/Saturnus"
 keywords = ["saturnus", "semihosting", "arm", "cortex-a"]
 categories = ["no-std", "embedded"]
 edition = "2021"
-build = "build.rs"
 
 [dependencies]

@@ -50,14 +50,24 @@ pub mod host;
 pub mod ops;
 
 /// Performs a semihosting operation, takes a pointer to an argument block.
+///
+/// # Safety
+///
+/// - `nr` must be a valid syscall from [`crate::ops`].
+/// - `arg` must point to a valid argument block for the syscall.
 #[inline(always)]
 pub unsafe fn syscall<T>(nr: usize, arg: &T) -> usize {
-    syscall1(nr, arg as *const T as usize)
+    unsafe { syscall1(nr, arg as *const T as usize) }
 }
 
 /// Performs a semihosting operation, takes one integer as an argument.
+///
+/// # Safety
+///
+/// - `nr` must be a valid syscall from [`crate::ops`].
+/// - `arg` must be an address that points to a valid argument block.
 #[inline(always)]
-pub unsafe fn syscall1(nr: usize, arg: usize) -> usize {
-    llvm_asm!("svc 0x123456" : "+{r0}"(nr) : "{r1}"(_arg) : "lr" : "volatile");
+pub unsafe fn syscall1(mut nr: usize, arg: usize) -> usize {
+    llvm_asm!("HLT #0xF000" : "+{x0}"(nr) : "{x1}"(arg) : "memory", "lr" : "volatile");
     nr
 }

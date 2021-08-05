@@ -65,6 +65,7 @@ name = "kernel-loader"
 version = "0.1.0"
 dependencies = [
  "goblin",
+ "saturnus-semihosting",
  "static_assertions",
 ]
 
