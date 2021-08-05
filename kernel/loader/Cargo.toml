@@ -11,6 +11,8 @@ edition = "2021"
 
 [dependencies]
 saturnus-semihosting = { path = "../../crates/semihosting" }
+cortex-a = "6.0"
+tock-registers = "0.7"
 
 static_assertions = "1.1"
 goblin = { version = "0.4", default-features = false, features = ["elf64"] }

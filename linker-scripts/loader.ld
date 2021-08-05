@@ -25,7 +25,7 @@ SECTIONS
     *(.plt .plt.*)
   } :loader
 
-  .vectors ALIGN(4K) : {
+  .vectors ALIGN(2K) : {
     __vectors_start__ = .;
     KEEP(*(.vectors))
     __vectors_end__ = .;

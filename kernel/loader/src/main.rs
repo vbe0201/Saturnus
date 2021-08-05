@@ -1,6 +1,12 @@
 #![no_std]
 #![no_main]
-#![feature(asm, global_asm, naked_functions, option_get_or_insert_default)]
+#![feature(
+    asm,
+    global_asm,
+    layout_for_ptr,
+    naked_functions,
+    option_get_or_insert_default
+)]
 #![deny(unsafe_op_in_unsafe_fn, rustdoc::broken_intra_doc_links)]
 
 #[macro_use]
@@ -82,11 +88,11 @@ unsafe extern "C" fn main(
         REL_ADR x1, _DYNAMIC
         bl {apply_relocations}
 
-        // Check if relocations were successful, otherwise loop infinitely
+        // Check if relocations were successful, otherwise loop infinitely.
         cmp x0, xzr
         b.ne .
 
-        // Run constructors in `.init_array` section
+        // Run constructors in `.init_array` section.
         bl {call_init_array}
 
         // Clear TPIDR_EL1 and set VBAR_EL1 to the exception vector table
@@ -94,12 +100,12 @@ unsafe extern "C" fn main(
         REL_ADR x16, __vectors_start__
         msr VBAR_EL1, x16
 
-        // Fill out the global exception vector table
+        // Populate the global exception vector table.
         bl {setup_exception_table}
 
-        // Load the kernel binary
-        ldp x0, x1,  [sp, #0x00] // Load `kernel_base` and `kernel_map`.
-        ldp x2, x30, [sp, #0x10] // Load `ini1_base` and link register.
+        // Load the kernel binary.
+        ldp x0, x1,  [sp, #0x00] // Restore `kernel_base` and `kernel_map`.
+        ldp x2, x30, [sp, #0x10] // Restore `ini1_base` and link register.
         add sp, sp, #0x20
         bl {load_kernel}
 
@@ -109,7 +115,7 @@ unsafe extern "C" fn main(
     "#,
         apply_relocations = sym rt::relocate,
         call_init_array = sym rt::call_init_array,
-        setup_exception_table = sym exception::setup_exception_table,
+        setup_exception_table = sym exception::setup_exception_vector,
         load_kernel = sym loader::load_kernel,
         options(noreturn)
     )
