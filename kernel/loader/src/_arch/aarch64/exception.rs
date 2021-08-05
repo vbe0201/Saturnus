@@ -27,14 +27,6 @@ pub unsafe fn setup_exception_vector() {
         static __exception_vector_table: UnsafeCell<()>;
     }
 
-    // Provided by the linker script.
-    extern "C" {
-        static __vectors_start__: *const u8;
-    }
-
-    // Make sure that the symbol is aligned to the required 2K boundary.
-    assert_eq!(mem::align_of_val_raw(__vectors_start__), 2usize.pow(11));
-
     // Load in the address of the exception vector table into the base register.
     VBAR_EL1.set(__exception_vector_table.get() as u64);
 
