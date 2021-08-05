@@ -1,3 +1,4 @@
+use crate::INITAL_PAGE_ALLOCATOR;
 use core::ptr;
 
 /// The maximum size of the INI1 section (12 MiB).
@@ -115,6 +116,13 @@ pub unsafe extern "C" fn load_kernel(kbase: usize, kmap: &KernelMap, ini1_base: 
                 );
             }
         }
+    }
+
+    // initialize the global page allocator
+    let page_region = ini1_end;
+    let page_region_size = 2 << 20;
+    unsafe {
+        INITAL_PAGE_ALLOCATOR.initialize(page_region);
     }
 
     todo!()

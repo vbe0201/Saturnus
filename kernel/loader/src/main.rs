@@ -14,11 +14,17 @@ pub use static_cell::StaticCell;
 
 mod exception;
 mod loader;
+mod page_allocator;
 mod panic;
 mod reloc;
 
 use core::{mem, slice};
 use loader::KernelMap;
+use page_allocator::PageAllocator;
+
+/// The global page allocator that is used throughout the loader's runtime
+/// for allocating pages.
+pub(crate) static INITAL_PAGE_ALLOCATOR: PageAllocator = PageAllocator::new();
 
 // The program entrypoint which forwards execution as-is into [`main`].
 global_asm!(
