@@ -11,3 +11,8 @@ members = [
 [profile.release]
 opt-level = "s"
 lto = "fat"
+
+# We override the `opt-level` in debug builds because somehow
+# we segfault rustc or LLVM when building with `0` opt-level
+[profile.dev]
+opt-level = 1

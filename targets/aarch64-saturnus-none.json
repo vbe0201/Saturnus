@@ -6,7 +6,7 @@
   "dynamic-linking": false,
   "env": "",
   "executables": true,
-  "features": "+a57,+crc,+crypto,+strict-align",
+  "features": "+a57,+crc,+crypto,+strict-align,-fp-armv8",
   "is-builtin": false,
   "has-elf-tls": false,
   "has-rpath": false,
