@@ -1,12 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(
-    asm,
-    global_asm,
-    layout_for_ptr,
-    naked_functions,
-    option_get_or_insert_default
-)]
+#![feature(asm, global_asm, naked_functions, option_get_or_insert_default)]
 #![deny(unsafe_op_in_unsafe_fn, rustdoc::broken_intra_doc_links)]
 
 #[macro_use]
@@ -14,9 +8,6 @@ extern crate saturnus_semihosting;
 
 #[macro_use]
 extern crate static_assertions;
-
-mod static_cell;
-pub use static_cell::StaticCell;
 
 #[macro_use]
 mod macros;
