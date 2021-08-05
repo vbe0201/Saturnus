@@ -73,7 +73,7 @@ pub unsafe fn syscall1(mut nr: usize, arg: usize) -> usize {
             "hlt #0xF000",
             inout("x0") nr => nr,
             in("x1") arg,
-            out("lr") _,
+            options(nostack)
         );
     }
     nr

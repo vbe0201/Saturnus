@@ -15,7 +15,7 @@ fn interrupt_free<R>(f: impl FnOnce() -> R) -> R {
             "mrs {}, daif",
             "msr daifset, #2",
             out(reg) daif_old,
-
+            options(nomem, nostack)
         );
     }
 
@@ -24,8 +24,16 @@ fn interrupt_free<R>(f: impl FnOnce() -> R) -> R {
     // Re-enable interrupts.
     let cur_daif: u64;
     unsafe {
-        asm!("mrs {}, daif", out(reg) cur_daif);
-        asm!("msr daif, {:x}", in(reg) ((cur_daif & !0x80) as u32) | (daif_old & 0x80) as u32);
+        asm!(
+            "mrs {}, daif",
+            out(reg) cur_daif,
+            options(nostack)
+        );
+        asm!(
+            "msr daif, {:x}",
+            in(reg) ((cur_daif & !0x80) as u32) | (daif_old & 0x80) as u32,
+            options(nomem, nostack)
+        );
     }
 
     ret
