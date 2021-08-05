@@ -6,9 +6,14 @@
 #[macro_use]
 extern crate static_assertions;
 
+mod static_cell;
+pub use static_cell::StaticCell;
+
 mod exception;
 mod panic;
 mod reloc;
+
+use core::{mem, slice};
 
 // The program entrypoint which forwards execution as-is into [`main`].
 global_asm!(
@@ -107,19 +112,19 @@ unsafe extern "C" fn main(
 
         // Clear TPIDR_EL1 and set VBAR_EL1 to the exception vector table
         msr TPIDR_EL1, xzr
-
-        // FIXME: `REL_ADDR` macro doesn't work with asm operand
-        adrp x16, {exception_vector_table}
-        add  x16, x16, #:lo12:{exception_vector_table}
+        REL_ADR x16, __vectors_start__
         msr VBAR_EL1, x16
+
+        // Fill out the global exception vector table
+        bl {setup_exception_table}
 
         // Exit QEMU using semihosting.
         mov x0, #0x18
         hlt #0xF000
     "#,
         apply_relocations = sym reloc::relocate,
-        exception_vector_table = sym exception::EXCEPTION_TABLE,
         call_init_array = sym call_init_array,
+        setup_exception_table = sym exception::setup_exception_table,
         options(noreturn)
     )
 }

@@ -1,3 +1,10 @@
+use crate::StaticCell;
+
+#[used]
+#[link_section = ".vectors"]
+static EXCEPTION_TABLE: StaticCell<ExceptionVectorTable> =
+    StaticCell::new(ExceptionVectorTable::empty());
+
 /// A single aarch64 exception vector.
 pub type ExceptionVector = unsafe extern "C" fn() -> !;
 
@@ -43,4 +50,15 @@ impl ExceptionVectorTable {
     }
 }
 
-pub static mut EXCEPTION_TABLE: ExceptionVectorTable = ExceptionVectorTable::empty();
+/// Sets up the global exception table that is linked into the `.vectors` section.
+pub unsafe extern "C" fn setup_exception_table() {
+    unsafe extern "C" fn loop_handler() -> ! {
+        loop {}
+    }
+
+    let table = unsafe { &mut *EXCEPTION_TABLE.get() };
+
+    for ent in table.0.iter_mut() {
+        *ent = Some(AlignedExceptionVector(loop_handler));
+    }
+}
