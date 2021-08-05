@@ -10,10 +10,12 @@ mod static_cell;
 pub use static_cell::StaticCell;
 
 mod exception;
+mod loader;
 mod panic;
 mod reloc;
 
 use core::{mem, slice};
+use loader::KernelMap;
 
 // The program entrypoint which forwards execution as-is into [`main`].
 global_asm!(
@@ -24,41 +26,6 @@ global_asm!(
         b main
 "#
 );
-
-/// Address mappings of all relevant kernel segments in physical memory.
-///
-/// This is passed to [`main`] in order to relocate and randomize all the kernel mappings
-/// in memory after enabling KASLR.
-#[derive(Clone, Copy, Debug)]
-#[repr(C)]
-struct KernelMap {
-    /// The start offset of the kernel's `.text` segment.
-    text_start: u32,
-    /// The end offset of the kernel's `.text` segment.
-    text_end: u32,
-    /// The start offset of the kernel's `.rodata` segment.
-    rodata_start: u32,
-    /// The end offset of the kernel's `.rodata` segment.
-    rodata_end: u32,
-    /// The start offset of the kernel's `.data` segment.
-    data_start: u32,
-    /// The end offset of the kernel's `.data` segment.
-    data_end: u32,
-    /// The start offset of the kernel's `.bss` segment.
-    bss_start: u32,
-    /// The end offset of the kernel's `.bss` segment.
-    bss_end: u32,
-    /// The start offset of the kernel's `.ini1` segment.
-    ini1: u32,
-    /// The start offset of the kernel's `.dynamic` segment.
-    dynamic: u32,
-    /// The start offset of the kernel's `.init_array` segment.
-    init_array_start: u32,
-    /// The end offset of the kernel's `.init_array` segment.
-    init_array_end: u32,
-}
-
-assert_eq_size!(KernelMap, [u8; 0x30]);
 
 /// The entrypoint to the Kernel Loader application.
 ///
