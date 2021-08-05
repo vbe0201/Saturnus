@@ -37,4 +37,24 @@
 //! [pdf]: http://infocenter.arm.com/help/topic/com.arm.doc.dui0471e/DUI0471E_developing_for_arm_processors.pdf
 
 #![no_std]
+#![feature(llvm_asm)]
 #![deny(unsafe_op_in_unsafe_fn, rustdoc::broken_intra_doc_links)]
+
+#[macro_use]
+mod macros;
+
+pub mod host;
+pub mod ops;
+
+/// Performs a semihosting operation, takes a pointer to an argument block.
+#[inline(always)]
+pub unsafe fn syscall<T>(nr: usize, arg: &T) -> usize {
+    syscall1(nr, arg as *const T as usize)
+}
+
+/// Performs a semihosting operation, takes one integer as an argument.
+#[inline(always)]
+pub unsafe fn syscall1(nr: usize, arg: usize) -> usize {
+    llvm_asm!("svc 0x123456" : "+{r0}"(nr) : "{r1}"(_arg) : "lr" : "volatile");
+    nr
+}
