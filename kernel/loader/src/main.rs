@@ -98,20 +98,12 @@ unsafe extern "C" fn main(
         REL_ADR x1, _DYNAMIC
         bl {apply_relocations}
 
-        // Check if relocations were successful
+        // Check if relocations were successful, otherwise loop infinitely
         cmp x0, xzr
-        b.ne 100f
+        b.ne .
 
         // Run constructors in `.init_array` section
-        REL_ADR x16, __init_array_start__
-        REL_ADR x17, __init_array_end__
-    3:
-        cmp x16, x17
-        b.eq 4f
-        ldr x18, [x16], #16
-        blr x18
-        b 3b
-    4:
+        bl {call_init_array}
 
         // Clear TPIDR_EL1 and set VBAR_EL1 to the exception vector table
         msr TPIDR_EL1, xzr
@@ -124,12 +116,34 @@ unsafe extern "C" fn main(
         // Exit QEMU using semihosting.
         mov x0, #0x18
         hlt #0xF000
-
-        // Infinite loop indicating an error while loading the kernel
-  100:  b 100b
     "#,
         apply_relocations = sym reloc::relocate,
         exception_vector_table = sym exception::EXCEPTION_TABLE,
+        call_init_array = sym call_init_array,
         options(noreturn)
     )
+}
+
+/// Uniformly calls all the functions in the `.init_array` segment.
+///
+/// The `.init_array` functions of the program must be defined with
+/// the [`init_array`] macro to get linked into the segment.
+///
+/// [`init_array`]: macro.init_array.html
+#[allow(unsafe_op_in_unsafe_fn)]
+pub unsafe extern "C" fn call_init_array() {
+    extern "C" {
+        static __init_array_start__: unsafe extern "C" fn();
+        static __init_array_end__: unsafe extern "C" fn();
+    }
+
+    // Calculate the amount of pointers that the .init_array segment holds.
+    let init_array_length = (&__init_array_end__ as *const _ as usize
+        - &__init_array_start__ as *const _ as usize)
+        / mem::size_of::<unsafe extern "C" fn()>();
+
+    // Compose a slice of all the function pointers in the segment and call them separately.
+    for ptr in slice::from_raw_parts(&__init_array_start__, init_array_length) {
+        ptr();
+    }
 }
