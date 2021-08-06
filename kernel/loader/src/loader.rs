@@ -1,8 +1,5 @@
-use crate::{
-    paging::{PageTableMapper, PhysAddr, VirtAddr, PAGE_DESCRIPTOR},
-    INITAL_PAGE_ALLOCATOR,
-};
 use core::ptr;
+
 use cortex_a::{
     asm::barrier,
     registers::{self, MAIR_EL1, SCTLR_EL1, TCR_EL1, TTBR0_EL1, TTBR1_EL1},
@@ -12,19 +9,11 @@ use tock_registers::{
     registers::InMemoryRegister,
 };
 
-/// The maximum size of the INI1 section (12 MiB).
-pub const MAX_INI1_SIZE: usize = 12 << 20;
-
-/// The amount of bytes that will be reserved for the kernel to use and
-/// thus won't be overwritten by the loader.
-pub const KERNEL_DATA_SIZE: usize = 0x1728000;
-
-/// Amount of memory that will be reserved *additionally* to the [`KERNEL_DATA_SIZE`] if
-/// the kernel requests a larger amount reserved data.
-pub const ADDITIONAL_KERNEL_DATA_SIZE: usize = 0x68000;
-
-/// Implementer ID of an ARM limited processor.
-pub const ARM_LIMITED_ID: u8 = 0x41;
+use crate::{
+    bsp,
+    paging::{PageTableMapper, PhysAddr, VirtAddr, PAGE_DESCRIPTOR},
+    INITAL_PAGE_ALLOCATOR,
+};
 
 /// Address mappings of all relevant kernel segments in physical memory.
 ///
@@ -63,6 +52,20 @@ assert_eq_size!(KernelMap, [u8; 0x30]);
 
 pub const INI1_MAGIC: [u8; 4] = *b"INI1";
 
+/// The maximum size of the INI1 section (12 MiB).
+pub const MAX_INI1_SIZE: usize = 12 << 20;
+
+/// The amount of bytes that will be reserved for the kernel to use and
+/// thus won't be overwritten by the loader.
+pub const KERNEL_DATA_SIZE: usize = 0x1728000;
+
+/// Amount of memory that will be reserved *additionally* to the [`KERNEL_DATA_SIZE`] if
+/// the kernel requests a larger amount reserved data.
+pub const ADDITIONAL_KERNEL_DATA_SIZE: usize = 0x68000;
+
+/// Implementer ID of an ARM limited processor.
+pub const ARM_LIMITED_ID: u8 = 0x41;
+
 /// The header of the INI1 process, which is the first process that will be ran by the kernel.
 #[derive(Debug, Clone, Default)]
 #[repr(C)]
@@ -79,16 +82,27 @@ pub struct InitialProcessBinaryHeader {
 
 assert_eq_align!(InitialProcessBinaryHeader, u32);
 
-/// Relocates the kernel to a random base address, identity maps the kernel and prepares everything
-/// for jumping back into the kernel.
+/// Relocates the kernel to a random base address, identity maps the kernel and
+/// prepares everything for jumping back into kernel code.
 ///
 /// # Returns
 ///
-/// The relocated base address of the kernel.
-pub unsafe extern "C" fn load_kernel(kbase: usize, kmap: &KernelMap, ini1_base: usize) -> usize {
-    // relocate the kernel physically, if required
-    let (kbase, kmap) = unsafe { relocate_kernel_physically(kbase, kmap) };
+/// The offset of the kernel base after relocation to the base befor relocation.
+///
+/// # Safety
+///
+/// The arguments taken by this function are passed by the kernel when invoking the
+/// loader. Therefore, the kernel is expected to provide valid information to us.
+pub unsafe extern "C" fn load_kernel(
+    kernel_base: usize,
+    kernel_map: *const KernelMap,
+    ini1_base: usize,
+) -> usize {
+    // Relocate the kernel physically in DRAM, if required.
+    let (kernel_base, kernel_map) = unsafe { relocate_kernel_physically(kernel_base, kernel_map) };
+    let kernel_map = unsafe { &*kernel_map };
 
+/*
     // check alignment of kernel map offsets
     assert_eq!(kbase & 0xFFF, 0, "kernel_base is not aligned");
     assert_eq!(kmap.text_start & 0xFFF, 0, "text_start is not aligned");
@@ -141,7 +155,7 @@ pub unsafe extern "C" fn load_kernel(kbase: usize, kmap: &KernelMap, ini1_base: 
 
     // setup MMU with initial identity mapping
     let mut ttbr1_table = PageTableMapper::new(&INITAL_PAGE_ALLOCATOR);
-    setup_initial_identity_mapping(&mut ttbr1_table, kbase, kmap, page_region, page_region_size);
+    setup_initial_identity_mapping(&mut ttbr1_table, kbase, kmap, page_region, page_region_size);*/
 
     todo!()
 }
@@ -263,75 +277,33 @@ fn setup_initial_identity_mapping(
     }
 }
 
-/// This retrieves memory layout information from the secure monitor,
-/// and adjusts the kernel's physical location if necessary.
+/// Retrieves memory layout information from the secure monitor, and adjusts the
+/// kernel's physical location if necessary.
 ///
 /// # Returns
 ///
 /// The adjusted kernel base and kernel map pointer.
 unsafe fn relocate_kernel_physically(
     kernel_base: usize,
-    kernel_map: &KernelMap,
-) -> (usize, &KernelMap) {
-    // if the base address was adjusted, move the kernel to the new base
-    // and return the new pointers
-    if let Some(adjusted_base) = get_adjusted_kernel_base(kernel_base) {
-        // copy kernel data to new location
-        // FIXME: This can probably be adjusted to copy words instead of bytes
-        unsafe {
+    kernel_map: *const KernelMap,
+) -> (usize, *const KernelMap) {
+    match bsp::adjust_kernel_base(kernel_base) {
+        Some(new_base) => unsafe {
+            // The base was changed, relocate the kernel physically.
             ptr::copy(
                 kernel_base as *const u8,
-                adjusted_base as *mut u8,
-                kernel_map.data_end as usize,
+                new_base as *mut u8,
+                (*kernel_map).data_end as usize,
+            );
+
+            // Adjust the kernel_map pointer correspondingly to the changed base.
+            let diff = new_base - kernel_base;
+            (
+                kernel_base + diff,
+                (kernel_map as *const u8).add(diff).cast::<KernelMap>(),
             )
-        };
-
-        // calculate the new kernel base and kernel map pointer
-        let diff = adjusted_base - kernel_base;
-        let kernel_map = unsafe {
-            let ptr = kernel_map as *const KernelMap as *const u8;
-            let ptr = ptr.add(diff);
-            &*ptr.cast::<KernelMap>()
-        };
-
-        (kernel_base + diff, kernel_map)
-    } else {
-        (kernel_base, kernel_map)
-    }
-}
-
-/// This sees how much more memory is available than expected, and relocates the kernel accordingly.
-///
-/// # Returns
-///
-/// `None` if the kernel does not require any relocation, otherwise `Some` with the adjusted base
-/// address.
-#[allow(clippy::diverging_sub_expression, unused_variables, unreachable_code)]
-fn get_adjusted_kernel_base(base: usize) -> Option<usize> {
-    // temporary to make the panics go away
-    return None;
-
-    // read DRAM size information from memory controller
-    let dram_size_from_mc: usize = todo!("tegra210 implementation missing");
-
-    // read DRAM size information from Secure Monitor KernelConfiguration
-    let memory_type: usize = todo!("tegra210 implementation missing");
-
-    // convert memory type to size of memory
-    let dram_size_from_kernel_cfg = match memory_type {
-        // MemoryType_6GB = 1
-        1 => 6 << 30,
-        // MemoryType_8GB = 2
-        2 => 8 << 30,
-        // MemoryType_4G  = 0 (default case)
-        _ => 4 << 30,
-    };
-
-    // on normal systems, these should be equal and kernel will not be relocated
-    if dram_size_from_mc < 2 * dram_size_from_kernel_cfg {
-        Some(base + (dram_size_from_mc - dram_size_from_kernel_cfg) / 2)
-    } else {
-        None
+        },
+        None => (kernel_base, kernel_map),
     }
 }
 

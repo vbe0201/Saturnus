@@ -19,3 +19,13 @@ goblin = { version = "0.4", default-features = false, features = ["elf64"] }
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 bitflags = "1"
+
+[features]
+default = ["bsp-qemu"]
+
+# Builds the loader using platform-specific code for running
+# on real Nintendo Switch (codename NX) hardware.
+bsp-nintendo-nx = []
+# Builds the loader using platform-specific code for running
+# under a QEMU semihosting session for debugging.
+bsp-qemu = []
