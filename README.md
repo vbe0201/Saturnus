@@ -71,11 +71,20 @@ are encouraged and heavily appreciated anytime!
 
 ## License
 
-Saturnus is distributed under the terms of either the Apache License (Version 2.0) or the
-MIT license, at the user's choice.
+Saturnus notably consists of the Kernel itself and its corresponding bootstrap loader, which
+can be found under [`kernel/`](./kernel/), and its library ecosystem under
+[`crates/`](./crates/).
 
-See [LICENSE-APACHE](./LICENSE-APACHE) and [LICENSE-MIT](./LICENSE-MIT) for details.
-Contributions to the Saturnus project must be made under the terms of both licenses.
+The kernel and its loader are licensed under the terms of the GNU General Public License v2.
+See [`LICENSE-GPL`](./LICENSE-GPL) for more details.
+
+The library ecosystem, on the other hand, is designed to be re-usable in the world of embedded
+Cortex-A, and is therefore dual-licensed under the terms of either the Apache License
+(Version 2.0) or the MIT license, at the user's choice. See [LICENSE-APACHE](./LICENSE-APACHE)
+and [LICENSE-MIT](./LICENSE-MIT) for details.
+
+Contributions to a specific component of the Saturnus project must be made under the terms of
+all licenses it is governed by.
 
 [cargo-xtask]: https://github.com/matklad/cargo-xtask/
 [QEMU]: https://www.qemu.org/
