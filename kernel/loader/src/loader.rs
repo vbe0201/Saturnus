@@ -76,13 +76,13 @@ pub unsafe extern "C" fn load_kernel(kbase: usize, kmap: &KernelMap, ini1_base: 
     let (kbase, kmap) = unsafe { relocate_kernel_physically(kbase, kmap) };
 
     // check alignment of kernel map offsets
-    assert!(kbase & 0xFFF != 0, "kernel_base is not aligned");
-    assert!(kmap.text_start & 0xFFF != 0, "text_start is not aligned");
-    assert!(kmap.text_end & 0xFFF != 0, "text_end is not aligned");
-    assert!(kmap.rodata_start & 0xFFF != 0, "rodata_start not aligned");
-    assert!(kmap.rodata_end & 0xFFF != 0, "rodata_end is not aligned");
-    assert!(kmap.data_start & 0xFFF != 0, "data_start is not aligned");
-    assert!(kmap.data_end & 0xFFF != 0, "data_end is not aligned");
+    assert_ne!(kbase & 0xFFF, 0, "kernel_base is not aligned");
+    assert_ne!(kmap.text_start & 0xFFF, 0, "text_start is not aligned");
+    assert_ne!(kmap.text_end & 0xFFF, 0, "text_end is not aligned");
+    assert_ne!(kmap.rodata_start & 0xFFF, 0, "rodata_start not aligned");
+    assert_ne!(kmap.rodata_end & 0xFFF, 0, "rodata_end is not aligned");
+    assert_ne!(kmap.data_start & 0xFFF, 0, "data_start is not aligned");
+    assert_ne!(kmap.data_end & 0xFFF, 0, "data_end is not aligned");
 
     // reserve 0x68000 extra bytes if requested by the kernel
     let reserved_data_size =

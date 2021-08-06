@@ -80,7 +80,7 @@ fn main() -> anyhow::Result<()> {
             .as_ref()
             .ok_or_else(|| anyhow!("'package' option required for this action"))
             .and_then(|name| {
-                xtask::package::find_package(&name)
+                xtask::package::find_package(name)
                     .ok_or_else(|| anyhow!("'{}' is an unknown package", name))
             });
 
