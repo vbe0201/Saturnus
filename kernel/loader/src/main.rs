@@ -15,6 +15,7 @@ mod macros;
 mod exception;
 mod loader;
 mod page_allocator;
+mod paging;
 mod panic;
 mod rt;
 
