@@ -6,6 +6,12 @@ use goblin::elf64::{
     reloc::{self, Rel, Rela},
 };
 
+#[cfg(target_arch = "aarch64")]
+#[path = "_arch/aarch64/rt.rs"]
+mod arch_rt;
+
+use arch_rt::R_ARCHITECTURE_SPECIFIC;
+
 // This does not correspond to real program headers, and instead is needed because
 // `goblin` can't translate addresses otherwise. We need to supply a real base here
 // or otherwise we will end up producing broken relocations.
@@ -89,7 +95,7 @@ pub unsafe extern "C" fn relocate(base: *mut u8, dynamic: *const u8) -> Relocati
 
         // Apply the relocation.
         match reloc::r_type(rela.r_info) {
-            reloc::R_AARCH64_RELATIVE => {
+            R_ARCHITECTURE_SPECIFIC => {
                 let value = base.offset(rela.r_addend as isize) as usize;
                 base.add(rela.r_offset as usize)
                     .cast::<usize>()
