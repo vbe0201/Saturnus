@@ -9,6 +9,7 @@ members = [
 ]
 
 [profile.release]
+codegen-units = 1
 opt-level = "s"
 lto = "fat"
 
