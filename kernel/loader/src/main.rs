@@ -90,8 +90,6 @@ unsafe extern "C" fn main(
         msr TPIDR_EL1, xzr
         bl {setup_exception_vector}
 
-        brk 1
-
         // Load the kernel binary.
         ldp x0, x1,  [sp, #0x00] // Restore `kernel_base` and `kernel_map`.
         ldp x2, x30, [sp, #0x10] // Restore `ini1_base` and link register.
