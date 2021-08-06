@@ -3,6 +3,7 @@ use core::panic::PanicInfo;
 use saturnus_semihosting::debug::{self, EXIT_FAILURE};
 
 /// The panic handler of the loader application.
+#[inline(never)]
 #[panic_handler]
 fn panic(info: &PanicInfo<'_>) -> ! {
     // Print the panic information to HOST stderr.
