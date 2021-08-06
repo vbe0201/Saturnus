@@ -118,18 +118,16 @@ pub unsafe extern "C" fn relocate(base: *mut u8, dynamic: *const u8) -> Relocati
 /// `__init_array_end__` symbols which span the entire `.init_array` section.
 #[allow(unsafe_op_in_unsafe_fn)]
 pub unsafe extern "C" fn call_init_array() {
-    extern "C" {
-        static __init_array_start__: unsafe extern "C" fn();
-        static __init_array_end__: unsafe extern "C" fn();
-    }
+    let (start, end) = linker_symbol!(
+        __init_array_start__ as unsafe extern "C" fn(),
+        __init_array_end__ as unsafe extern "C" fn(),
+    );
 
     // Calculate the amount of pointers that the segment holds.
-    let init_array_len = (&__init_array_end__ as *const _ as usize
-        - &__init_array_start__ as *const _ as usize)
-        / mem::size_of::<unsafe extern "C" fn()>();
+    let len = (end as usize - start as usize) / mem::size_of::<unsafe extern "C" fn()>();
 
     // Compose a slice of all the function pointers and call them.
-    for ptr in slice::from_raw_parts(&__init_array_start__, init_array_len) {
+    for ptr in slice::from_raw_parts(start, len) {
         ptr();
     }
 }

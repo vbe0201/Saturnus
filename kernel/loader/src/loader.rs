@@ -102,7 +102,7 @@ pub unsafe extern "C" fn load_kernel(
     let (kernel_base, kernel_map) = unsafe { relocate_kernel_physically(kernel_base, kernel_map) };
     let kernel_map = unsafe { &*kernel_map };
 
-/*
+    /*
     // check alignment of kernel map offsets
     assert_eq!(kbase & 0xFFF, 0, "kernel_base is not aligned");
     assert_eq!(kmap.text_start & 0xFFF, 0, "text_start is not aligned");
@@ -194,14 +194,8 @@ fn setup_initial_identity_mapping(
 
     // identity map the loader
     let (start, size) = unsafe {
-        extern "C" {
-            static __start__: u8;
-            static __end__: u8;
-        }
-
-        let start = &__start__ as *const _ as usize;
-        let end = &__end__ as *const _ as usize;
-        (start, end - start)
+        let (start, end) = linker_symbol!(__start__, __end__);
+        (start as usize, end as usize - start as usize)
     };
 
     ttbr0_table
