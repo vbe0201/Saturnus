@@ -5,7 +5,7 @@ name = "kernel-loader"
 version = "0.1.0"
 authors = ["Valentin B. <valentin.be@protonmail.com>", "Justus K <justus.k@protonmail.com>"]
 description = "Kernel Loader for setting up KASLR and mapping all segments in memory"
-license = "Apache-2.0 OR MIT"
+license = "GPL-2.0"
 repository = "https://github.com/vbe0201/Saturnus"
 edition = "2021"
 
