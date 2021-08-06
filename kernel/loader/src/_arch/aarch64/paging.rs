@@ -104,6 +104,24 @@ impl PageTableMapper {
 
         unreachable!()
     }
+
+    /// Map `count` bytes from `vaddr` to `paddr`.
+    pub fn map_many(
+        &mut self,
+        paddr: PhysAddr,
+        vaddr: VirtAddr,
+        count: usize,
+        attrs: InMemoryRegister<u64, PAGE_DESCRIPTOR::Register>,
+        page_alloc: &PageAllocator,
+    ) -> Result<(), Error> {
+        for idx in 0..((count + 0xFFF) / 0x1000) {
+            let vaddr = VirtAddr::new(vaddr.as_usize() + idx * 0x1000);
+            let paddr = PhysAddr::new(paddr.as_usize() + idx * 0x1000);
+            self.map(paddr, vaddr, InMemoryRegister::new(attrs.get()), page_alloc)?;
+        }
+
+        Ok(())
+    }
 }
 
 /// Get all three page table indices from the given virtual address.
@@ -121,7 +139,7 @@ fn indices(vaddr: VirtAddr) -> [usize; 3] {
 
 // A level 3 page descriptor, as per ARMv8-A Architecture Reference Manual Figure D5-17.
 register_bitfields! {u64,
-    PAGE_DESCRIPTOR [
+    pub PAGE_DESCRIPTOR [
         /// Unprivileged execute-never.
         UXN OFFSET(54) NUMBITS(1) [
             False = 0,
