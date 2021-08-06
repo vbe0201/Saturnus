@@ -1,7 +1,7 @@
 // This is an architecture-specific module that is made available through the
 // path attribute. See the generic module, [`crate::exception`], for orientation.
 
-use core::{cell::UnsafeCell, fmt, mem};
+use core::{cell::UnsafeCell, fmt};
 
 use cortex_a::{asm, registers::*};
 use tock_registers::{

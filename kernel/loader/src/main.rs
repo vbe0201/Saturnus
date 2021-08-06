@@ -19,7 +19,6 @@ mod paging;
 mod panic;
 mod rt;
 
-use core::{mem, slice};
 use loader::KernelMap;
 use page_allocator::PageAllocator;
 
@@ -87,13 +86,11 @@ unsafe extern "C" fn main(
         // Run constructors in `.init_array` section.
         bl {call_init_array}
 
-        // Clear TPIDR_EL1 and set VBAR_EL1 to the exception vector table
+        // Setup exception handling for catching runtime errors.
         msr TPIDR_EL1, xzr
-        REL_ADR x16, __vectors_start__
-        msr VBAR_EL1, x16
+        bl {setup_exception_vector}
 
-        // Populate the global exception vector table.
-        bl {setup_exception_table}
+        brk 1
 
         // Load the kernel binary.
         ldp x0, x1,  [sp, #0x00] // Restore `kernel_base` and `kernel_map`.
@@ -107,7 +104,7 @@ unsafe extern "C" fn main(
     "#,
         apply_relocations = sym rt::relocate,
         call_init_array = sym rt::call_init_array,
-        setup_exception_table = sym exception::setup_exception_vector,
+        setup_exception_vector = sym exception::setup_exception_vector,
         load_kernel = sym loader::load_kernel,
         options(noreturn)
     )

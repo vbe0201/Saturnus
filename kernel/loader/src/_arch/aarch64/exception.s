@@ -44,9 +44,8 @@
  */
 .macro END_VECTOR_ENTRY since
 .cfi_endproc
-//.if (. - \since) > (32 * 4)
-//    .error "Exception vector exceeds the limit of 32 instructions"
-//.endif
+// This triggers an "invalid number of bytes" assembler error if the limit of
+// 32 instructions has already been exceeded at the point of macro invocation.
 .fill \since + (32 * 4) - .
 .endm
 
