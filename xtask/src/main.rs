@@ -32,6 +32,9 @@ struct RunConfig {
     /// build the package in release mode (optimizations enabled)
     #[argh(switch)]
     release: bool,
+    /// specifies for which board to build the package (e.g. QEMU, Switch, etc)
+    #[argh(option)]
+    bsp: Option<String>,
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -41,6 +44,9 @@ struct BuildConfig {
     /// build the package in release mode (optimizations enabled)
     #[argh(switch)]
     release: bool,
+    /// specifies for which board to build the package (e.g. QEMU, Switch, etc)
+    #[argh(option)]
+    bsp: Option<String>,
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -50,6 +56,9 @@ struct LlvmConfig {
     /// build the package in release mode (optimizations enabled)
     #[argh(switch)]
     release: bool,
+    /// specifies for which board to build the package (e.g. QEMU, Switch, etc)
+    #[argh(option)]
+    bsp: Option<String>,
     /// which tool should be invoked
     #[argh(positional)]
     tool: String,
@@ -92,17 +101,17 @@ fn main() -> anyhow::Result<()> {
 
 fn execute_action(args: &Arguments, pkg: Package) -> anyhow::Result<()> {
     match args.cmd {
-        Action::Build(BuildConfig { release }) => {
-            let elf = xtask::build_package(release, pkg)?;
+        Action::Build(ref cfg) => {
+            let elf = xtask::build_package(cfg.release, cfg.bsp.as_deref(), pkg)?;
             xtask::extract_binary(elf)?;
         }
-        Action::Run(RunConfig { release }) => {
-            let elf = xtask::build_package(release, pkg)?;
+        Action::Run(ref cfg) => {
+            let elf = xtask::build_package(cfg.release, cfg.bsp.as_deref(), pkg)?;
             let path = xtask::extract_binary(elf)?;
             xtask::runner::run_qemu_aarch64(path)?;
         }
         Action::Llvm(ref cfg) => {
-            xtask::run_llvm_tool(cfg.release, pkg, &cfg.tool, &cfg.rest)?;
+            xtask::run_llvm_tool(cfg.release, cfg.bsp.as_deref(), pkg, &cfg.tool, &cfg.rest)?;
         }
         Action::Lint(ref cfg) => {
             xtask::lint(cfg.check, pkg)?;

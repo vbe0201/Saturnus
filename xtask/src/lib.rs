@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use xshell::cmd;
 
 /// Build the Saturnus kernel and return the path to the ELF file which was produced by cargo.
-pub fn build_package(release: bool, pkg: Package) -> Result<PathBuf> {
+pub fn build_package(release: bool, bsp: Option<&str>, pkg: Package) -> Result<PathBuf> {
     let _cwd = xshell::pushd(rustc::root_dir());
 
     // build the kernel using cargo
@@ -19,11 +19,21 @@ pub fn build_package(release: bool, pkg: Package) -> Result<PathBuf> {
         cargo_name, target, ..
     } = pkg;
 
+    let features = match bsp {
+        Some(bsp) => vec![
+            "--no-default-features".to_owned(),
+            "--features".to_owned(),
+            format!("bsp-{}", bsp),
+        ],
+        None => vec![],
+    };
+
     cmd!(
         "cargo build
             {release_arg...}
             -p {cargo_name}
             --target {target}
+            {features...}
             -Zbuild-std=core,alloc,compiler_builtins"
     )
     .run()?;
@@ -51,8 +61,14 @@ pub fn extract_binary(elf: PathBuf) -> Result<PathBuf> {
 }
 
 /// Run the given llvm tool on the produced kernel file with the given arguments.
-pub fn run_llvm_tool(release: bool, pkg: Package, tool: &str, args: &[String]) -> Result<()> {
-    let kernel = build_package(release, pkg)?;
+pub fn run_llvm_tool(
+    release: bool,
+    bsp: Option<&str>,
+    pkg: Package,
+    tool: &str,
+    args: &[String],
+) -> Result<()> {
+    let kernel = build_package(release, bsp, pkg)?;
     let tool_bin = rustc::llvm_tool(tool)?;
     cmd!("{tool_bin} {kernel} {args...}")
         .echo_cmd(false)
