@@ -16,3 +16,10 @@ mod bsp_resources;
 pub fn adjust_kernel_base(base: usize) -> Option<usize> {
     bsp_resources::adjust_kernel_base(base)
 }
+
+/// This function is called when the kernel is loaded and determines if the loader
+/// will reserve an [additional](crate::loader::ADDITIONAL_KERNEL_DATA_SIZE) amount
+/// of data to be used by the kernel.
+pub fn reserve_additional_kernel_data() -> bool {
+    bsp_resources::reserve_additional_kernel_data()
+}

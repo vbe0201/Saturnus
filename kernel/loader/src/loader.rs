@@ -2,17 +2,14 @@ use core::ptr;
 
 use cortex_a::{
     asm::barrier,
-    registers::{self, MAIR_EL1, SCTLR_EL1, TCR_EL1, TTBR0_EL1, TTBR1_EL1},
+    registers::{MAIR_EL1, SCTLR_EL1, TCR_EL1, TTBR0_EL1, TTBR1_EL1},
 };
-use tock_registers::{
-    interfaces::{Readable, Writeable},
-    registers::InMemoryRegister,
-};
+use tock_registers::{interfaces::Writeable, registers::InMemoryRegister};
 
 use crate::{
     bsp,
     paging::{PageTableMapper, PhysAddr, VirtAddr, PAGE_DESCRIPTOR},
-    INITAL_PAGE_ALLOCATOR,
+    rt, INITAL_PAGE_ALLOCATOR,
 };
 
 /// Address mappings of all relevant kernel segments in physical memory.
@@ -63,9 +60,6 @@ pub const KERNEL_DATA_SIZE: usize = 0x1728000;
 /// the kernel requests a larger amount reserved data.
 pub const ADDITIONAL_KERNEL_DATA_SIZE: usize = 0x68000;
 
-/// Implementer ID of an ARM limited processor.
-pub const ARM_LIMITED_ID: u8 = 0x41;
-
 /// The header of the INI1 process, which is the first process that will be ran by the kernel.
 #[derive(Debug, Clone, Default)]
 #[repr(C)]
@@ -102,22 +96,37 @@ pub unsafe extern "C" fn load_kernel(
     let (_, kernel_map) = unsafe { relocate_kernel_physically(kernel_base, kernel_map) };
     let kernel_map = unsafe { &*kernel_map };
 
-    /*
     // check alignment of kernel map offsets
-    assert_eq!(kbase & 0xFFF, 0, "kernel_base is not aligned");
-    assert_eq!(kmap.text_start & 0xFFF, 0, "text_start is not aligned");
-    assert_eq!(kmap.text_end & 0xFFF, 0, "text_end is not aligned");
-    assert_eq!(kmap.rodata_start & 0xFFF, 0, "rodata_start not aligned");
-    assert_eq!(kmap.rodata_end & 0xFFF, 0, "rodata_end is not aligned");
-    assert_eq!(kmap.data_start & 0xFFF, 0, "data_start is not aligned");
-    assert_eq!(kmap.data_end & 0xFFF, 0, "data_end is not aligned");
+    assert_eq!(kernel_base & 0xFFF, 0, "kernel_base is not aligned");
+    assert_eq!(
+        kernel_map.text_start & 0xFFF,
+        0,
+        "text_start is not aligned"
+    );
+    assert_eq!(kernel_map.text_end & 0xFFF, 0, "text_end is not aligned");
+    assert_eq!(
+        kernel_map.rodata_start & 0xFFF,
+        0,
+        "rodata_start not aligned"
+    );
+    assert_eq!(
+        kernel_map.rodata_end & 0xFFF,
+        0,
+        "rodata_end is not aligned"
+    );
+    assert_eq!(
+        kernel_map.data_start & 0xFFF,
+        0,
+        "data_start is not aligned"
+    );
+    assert_eq!(kernel_map.data_end & 0xFFF, 0, "data_end is not aligned");
 
     // reserve 0x68000 extra bytes if requested by the kernel
-    let reserved_data_size =
-        KERNEL_DATA_SIZE + should_reserve_additional_data() as usize * ADDITIONAL_KERNEL_DATA_SIZE;
+    let reserved_data_size = KERNEL_DATA_SIZE
+        + bsp::reserve_additional_kernel_data() as usize * ADDITIONAL_KERNEL_DATA_SIZE;
 
     // calculate addresses where to place INI1
-    let ini1_end = kbase as usize + kmap.ini1 as usize + reserved_data_size;
+    let ini1_end = kernel_base as usize + kernel_map.ini1 as usize + reserved_data_size;
     let ini1_start = ini1_end - MAX_INI1_SIZE;
 
     // relocate INI1 if it isn't in the right spot
@@ -155,7 +164,13 @@ pub unsafe extern "C" fn load_kernel(
 
     // setup MMU with initial identity mapping
     let mut ttbr1_table = PageTableMapper::new(&INITAL_PAGE_ALLOCATOR);
-    setup_initial_identity_mapping(&mut ttbr1_table, kbase, kmap, page_region, page_region_size);*/
+    setup_initial_identity_mapping(
+        &mut ttbr1_table,
+        kernel_base,
+        kernel_map,
+        page_region,
+        page_region_size,
+    );
 
     todo!()
 }
@@ -247,17 +262,10 @@ fn setup_initial_identity_mapping(
             + TCR_EL1::AS::ASID16Bits,
     );
 
-    // check which CPU we are running, and configure CPUECTLR, CPUACTLR appropriately
-    let manufacture_id = registers::MIDR_EL1.get();
-    let implementer = (manufacture_id >> 24) as u8;
-
-    todo!("Save X19-X30 + SP, save context struct in TPIDR_EL1.");
-
-    if implementer == ARM_LIMITED_ID {
-        // FIXME: Implement this
+    // perform board / architecture specific setup
+    unsafe {
+        rt::arch_specific_setup();
     }
-
-    todo!("Verify that TPIDR_EL1 is still set.");
 
     // flush caches so page tables will be read once MMU is enabled
     todo!("flush caches");
@@ -299,10 +307,4 @@ unsafe fn relocate_kernel_physically(
         },
         None => (kernel_base, kernel_map),
     }
-}
-
-/// This functions checks a flag from the KernelConfiguration.
-fn should_reserve_additional_data() -> bool {
-    // FIXME: This needs to be implemented correctly, requires tegra210 crate
-    false
 }

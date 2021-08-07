@@ -4,3 +4,7 @@
 pub fn adjust_kernel_base(_base: usize) -> Option<usize> {
     todo!("missing tegra210 crate implementation")
 }
+
+pub fn reserve_additional_kernel_data() -> bool {
+    todo!("missing tegra210 crate implementation")
+}

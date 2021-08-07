@@ -131,3 +131,12 @@ pub unsafe extern "C" fn call_init_array() {
         ptr();
     }
 }
+
+/// Perform architecture specific setup.
+///
+/// This function is called directly before enabling paging while loading the kernel.
+pub unsafe fn arch_specific_setup() {
+    unsafe {
+        arch_rt::arch_specific_setup();
+    }
+}
