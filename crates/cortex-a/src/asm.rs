@@ -14,7 +14,7 @@ pub fn nop() {
 ///
 /// For more details on wfi, refer to [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802a/CIHEGBBF.html).
 #[inline(always)]
-pub fn wfi() {
+pub unsafe fn wfi() {
     match () {
         #[cfg(target_arch = "aarch64")]
         () => unsafe { asm!("wfi", options(nostack, nomem)) },
@@ -26,7 +26,7 @@ pub fn wfi() {
 ///
 /// For more details of wfe - sev pair, refer to [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802a/CIHEGBBF.html).
 #[inline(always)]
-pub fn wfe() {
+pub unsafe fn wfe() {
     match () {
         #[cfg(target_arch = "aarch64")]
         () => unsafe { asm!("wfe", options(nostack, nomem)) },

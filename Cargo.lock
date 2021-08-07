@@ -123,6 +123,9 @@ dependencies = [
 [[package]]
 name = "saturnus-cortex-a"
 version = "0.1.0"
+dependencies = [
+ "tock-registers",
+]
 
 [[package]]
 name = "saturnus-semihosting"
