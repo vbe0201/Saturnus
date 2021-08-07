@@ -38,7 +38,6 @@ impl PageAllocator {
     pub fn allocate(&self) -> NonNull<[MaybeUninit<u8>; PAGE_SIZE]> {
         let page = self.next_address.fetch_add(PAGE_SIZE, Ordering::Relaxed);
         let page = page as *mut [MaybeUninit<u8>; PAGE_SIZE];
-        let page = NonNull::new(page).expect("tried to allocate page but next_address is 0");
-        page
+        NonNull::new(page).expect("tried to allocate page but next_address is 0")
     }
 }

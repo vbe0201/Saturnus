@@ -2,7 +2,6 @@ use crate::{
     page_allocator::PageAllocator,
     paging::{PhysAddr, VirtAddr},
 };
-use core::ptr::NonNull;
 use tock_registers::{interfaces::Readable, register_bitfields, registers::InMemoryRegister};
 
 /// Errors that can happen while performing page table operations.

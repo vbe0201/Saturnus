@@ -35,6 +35,7 @@ macro_rules! init_array {
 #[macro_export]
 macro_rules! linker_symbol {
     ($name:ident as $T:ty) => {
+        #[allow(unused_unsafe)]
         unsafe {
             let ptr: *mut $T;
             asm!(

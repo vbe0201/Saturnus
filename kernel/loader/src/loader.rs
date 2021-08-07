@@ -99,7 +99,7 @@ pub unsafe extern "C" fn load_kernel(
     ini1_base: usize,
 ) -> usize {
     // Relocate the kernel physically in DRAM, if required.
-    let (kernel_base, kernel_map) = unsafe { relocate_kernel_physically(kernel_base, kernel_map) };
+    let (_, kernel_map) = unsafe { relocate_kernel_physically(kernel_base, kernel_map) };
     let kernel_map = unsafe { &*kernel_map };
 
     /*

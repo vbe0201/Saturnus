@@ -16,15 +16,14 @@ mod macros;
 #[path = "_arch/aarch64/main.rs"]
 mod arch_main;
 
-mod bsp;
-mod exception;
-mod loader;
-mod page_allocator;
-mod paging;
-mod panic;
-mod rt;
+pub mod bsp;
+pub mod exception;
+pub mod loader;
+pub mod page_allocator;
+pub mod paging;
+pub mod panic;
+pub mod rt;
 
-use loader::KernelMap;
 use page_allocator::PageAllocator;
 
 /// The global page allocator that is used throughout the loader's runtime
