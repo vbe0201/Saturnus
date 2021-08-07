@@ -1,8 +1,7 @@
-//! Holds the Current Exception Level.
-
-use tock_registers::{interfaces::Readable, register_bitfields};
+use tock_registers::register_bitfields;
 
 register_bitfields! {u64,
+    /// Holds the Current Exception Level.
     pub CurrentEL [
         /// Current Exception level. Possible values of this field are:
         ///
@@ -24,18 +23,11 @@ register_bitfields! {u64,
     ]
 }
 
-pub struct Reg;
-
-impl Readable for Reg {
-    type T = u64;
-    type R = CurrentEL::Register;
-
-    #[inline]
-    fn get(&self) -> u64 {
-        read_msr!(u64, "x", "CurrentEL")
-    }
-}
-
-#[doc(hidden)]
-#[allow(non_upper_case_globals)]
-pub const CurrentEL: Reg = Reg {};
+impl_read_msr!(
+    /// Holds the Current Exception Level.
+    #[allow(non_upper_case_globals)]
+    CurrentEL,
+    u64,
+    "x",
+    "CurrentEL"
+);

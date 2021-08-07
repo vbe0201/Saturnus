@@ -29,20 +29,58 @@ macro_rules! write_msr {
     };
 }
 
-macro_rules! impl_set_msr {
-    ($T:ty, $width:literal, $name:literal) => {
-        #[inline]
-        fn set(&self, val: $T) {
-            write_msr!($width, $name, val);
+macro_rules! impl_read_write_msr {
+    ($(#[$doc:meta])* $name:ident, $reg_T:ty, $T:ty, $width:literal, $msr:literal) => {
+        pub struct Reg;
+
+        impl tock_registers::interfaces::Readable for Reg {
+            type T = $T;
+            type R = $reg_T;
+
+            #[inline]
+            fn get(&self) -> $T {
+                read_msr!($T, $width, $msr);
+            }
         }
+
+        impl tock_registers::interfaces::Writeable for Reg {
+            type T = $T;
+            type R = $reg_T;
+
+            #[inline]
+            fn set(&self, val: $T) {
+                write_msr!($width, $msr, val);
+            }
+        }
+
+        $(#[$doc])*
+        pub const $name: Reg = Reg {};
+    };
+
+    ($(#[$doc:meta])* $name:ident, $T:ty, $width:literal, $msr:literal) => {
+        impl_read_write_msr!($(#[$doc])* $name, $name::Register, $T, $width, $msr);
     };
 }
 
-macro_rules! impl_get_msr {
-    ($T:ty, $width:literal, $name:literal) => {
-        #[inline]
-        fn get(&self) -> $T {
-            read_msr!($T, $width, $name)
+macro_rules! impl_read_msr {
+    ($(#[$doc:meta])* $name:ident, $reg_T:ty, $T:ty, $width:literal, $msr:literal) => {
+        pub struct Reg;
+
+        impl tock_registers::interfaces::Readable for Reg {
+            type T = $T;
+            type R = $reg_T;
+
+            #[inline]
+            fn get(&self) -> $T {
+                read_msr!($T, $width, $msr);
+            }
         }
+
+        $(#[$doc])*
+        pub const $name: Reg = Reg {};
+    };
+
+    ($(#[$doc:meta])* $name:ident, $T:ty, $width:literal, $msr:literal) => {
+        impl_read_msr!($(#[$doc])* $name, $name::Register, $T, $width, $msr);
     };
 }

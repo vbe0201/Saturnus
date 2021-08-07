@@ -1,11 +1,7 @@
-//! Interrupt Mask Bits
-
-use tock_registers::{
-    interfaces::{Readable, Writeable},
-    register_bitfields,
-};
+use tock_registers::register_bitfields;
 
 register_bitfields! {u64,
+    /// Interrupt Mask Bits
     pub DAIF [
         /// Process state D mask. The possible values of this bit are:
         ///
@@ -59,21 +55,10 @@ register_bitfields! {u64,
     ]
 }
 
-pub struct Reg;
-
-impl Readable for Reg {
-    type T = u64;
-    type R = DAIF::Register;
-
-    impl_get_msr!(u64, "x", "DAIF");
-}
-
-impl Writeable for Reg {
-    type T = u64;
-    type R = DAIF::Register;
-
-    impl_set_msr!(u64, "x", "DAIF");
-}
-
-#[doc(hidden)]
-pub const DAIF: Reg = Reg {};
+impl_read_write_msr!(
+    /// Interrupt Mask Bits
+    DAIF,
+    u64,
+    "x",
+    "DAIF"
+);
