@@ -1,0 +1,15 @@
+cargo-features = ["edition2021"]
+
+[package]
+name = "saturnus-cortex-a"
+version = "0.1.0"
+authors = ["Valentin B. <valentin.be@protonmail.com>", "Justus K <justus.k@protonmail.com>"]
+description = "Low-level hardware access to Cortex-A processors."
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/vbe0201/Saturnus"
+keywords = ["arm", "cortex-a"]
+categories = ["no-std", "embedded"]
+edition = "2021"
+
+[dependencies]
+cortex-a = "6.0"
