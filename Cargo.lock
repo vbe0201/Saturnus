@@ -123,9 +123,6 @@ dependencies = [
 [[package]]
 name = "saturnus-cortex-a"
 version = "0.1.0"
-dependencies = [
- "cortex-a",
-]
 
 [[package]]
 name = "saturnus-semihosting"

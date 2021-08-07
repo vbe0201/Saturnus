@@ -12,4 +12,4 @@ categories = ["no-std", "embedded"]
 edition = "2021"
 
 [dependencies]
-cortex-a = "6.0"
+tock-registers = { version = "0.7.x", default-features = false }
