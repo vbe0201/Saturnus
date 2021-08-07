@@ -7,7 +7,7 @@ use saturnus_semihosting::debug::{self, EXIT_FAILURE};
 #[panic_handler]
 fn panic(info: &PanicInfo<'_>) -> ! {
     // Print the panic information to HOST stderr.
-    heprintln!("{}", info).ok();
+    heprintln!("{}", info);
 
     // Exit the semihosting session.
     debug::exit(EXIT_FAILURE);

@@ -212,6 +212,7 @@ fn setup_initial_identity_mapping(
         let (start, end) = linker_symbol!(__start__, __end__);
         (start as usize, end as usize - start as usize)
     };
+    hprintln!("");
 
     ttbr0_table
         .map_many(

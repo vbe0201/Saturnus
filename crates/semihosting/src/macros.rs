@@ -25,10 +25,10 @@ macro_rules! syscall1 {
 #[macro_export]
 macro_rules! hprint {
     ($s:expr) => {
-        $crate::export::hstdout_str($s)
+        $crate::export::hstdout_str($s).expect("failed to print via semihosting")
     };
     ($($tt:tt)*) => {
-        $crate::export::hstdout_fmt(format_args!($($tt)*))
+        $crate::export::hstdout_fmt(format_args!($($tt)*)).expect("failed to print via semihosting")
     };
 }
 
@@ -39,13 +39,13 @@ macro_rules! hprint {
 #[macro_export]
 macro_rules! hprintln {
     () => {
-        $crate::export::hstdout_str("\n")
+        $crate::export::hstdout_str("\n").expect("failed to print via semihosting")
     };
     ($s:expr) => {
-        $crate::export::hstdout_str(concat!($s, "\n"))
+        $crate::export::hstdout_str(concat!($s, "\n")).expect("failed to print via semihosting")
     };
     ($s:expr, $($tt:tt)*) => {
-        $crate::export::hstdout_fmt(format_args!(concat!($s, "\n"), $($tt)*))
+        $crate::export::hstdout_fmt(format_args!(concat!($s, "\n"), $($tt)*)).expect("failed to print via semihosting")
     };
 }
 
@@ -56,10 +56,10 @@ macro_rules! hprintln {
 #[macro_export]
 macro_rules! heprint {
     ($s:expr) => {
-        $crate::export::hstderr_str($s)
+        $crate::export::hstderr_str($s).expect("failed to print via semihosting")
     };
     ($($tt:tt)*) => {
-        $crate::export::hstderr_fmt(format_args!($($tt)*))
+        $crate::export::hstderr_fmt(format_args!($($tt)*)).expect("failed to print via semihosting")
     };
 }
 
@@ -70,13 +70,13 @@ macro_rules! heprint {
 #[macro_export]
 macro_rules! heprintln {
     () => {
-        $crate::export::hstderr_str("\n")
+        $crate::export::hstderr_str("\n").expect("failed to print via semihosting")
     };
     ($s:expr) => {
-        $crate::export::hstderr_str(concat!($s, "\n"))
+        $crate::export::hstderr_str(concat!($s, "\n")).expect("failed to print via semihosting")
     };
     ($s:expr, $($tt:tt)*) => {
-        $crate::export::hstderr_fmt(format_args!(concat!($s, "\n"), $($tt)*))
+        $crate::export::hstderr_fmt(format_args!(concat!($s, "\n"), $($tt)*)).expect("failed to print via semihosting")
     };
 }
 
