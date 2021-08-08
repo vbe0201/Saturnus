@@ -6,6 +6,7 @@ pub fn nop() {
     match () {
         #[cfg(target_arch = "aarch64")]
         () => unsafe { asm!("nop", options(nostack, nomem)) },
+        #[cfg(not(target_arch = "aarch64"))]
         () => unimplemented!(),
     }
 }
@@ -18,6 +19,7 @@ pub unsafe fn wfi() {
     match () {
         #[cfg(target_arch = "aarch64")]
         () => unsafe { asm!("wfi", options(nostack, nomem)) },
+        #[cfg(not(target_arch = "aarch64"))]
         () => unimplemented!(),
     }
 }
@@ -30,6 +32,7 @@ pub unsafe fn wfe() {
     match () {
         #[cfg(target_arch = "aarch64")]
         () => unsafe { asm!("wfe", options(nostack, nomem)) },
+        #[cfg(not(target_arch = "aarch64"))]
         () => unimplemented!(),
     }
 }
@@ -44,6 +47,7 @@ pub fn sevl() {
     match () {
         #[cfg(target_arch = "aarch64")]
         () => unsafe { asm!("sevl", options(nostack, nomem)) },
+        #[cfg(not(target_arch = "aarch64"))]
         () => unimplemented!(),
     }
 }
@@ -58,6 +62,7 @@ pub fn sev() {
     match () {
         #[cfg(target_arch = "aarch64")]
         () => unsafe { asm!("sev", options(nostack, nomem)) },
+        #[cfg(not(target_arch = "aarch64"))]
         () => unimplemented!(),
     }
 }

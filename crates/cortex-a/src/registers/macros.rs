@@ -39,7 +39,7 @@ macro_rules! impl_read_write_msr {
 
             #[inline]
             fn get(&self) -> $T {
-                read_msr!($T, $width, $msr);
+                read_msr!($T, $width, $msr)
             }
         }
 
@@ -72,7 +72,7 @@ macro_rules! impl_read_msr {
 
             #[inline]
             fn get(&self) -> $T {
-                read_msr!($T, $width, $msr);
+                read_msr!($T, $width, $msr)
             }
         }
 
