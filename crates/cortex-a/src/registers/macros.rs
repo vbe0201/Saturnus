@@ -54,7 +54,7 @@ macro_rules! impl_read_write_msr {
         }
 
         $(#[$doc])*
-        pub const $name: Reg = Reg {};
+        pub static mut $name: Reg = Reg {};
     };
 
     ($(#[$doc:meta])* $name:ident, $T:ty, $width:literal, $msr:literal) => {
@@ -77,7 +77,7 @@ macro_rules! impl_read_msr {
         }
 
         $(#[$doc])*
-        pub const $name: Reg = Reg {};
+        pub static mut $name: Reg = Reg {};
     };
 
     ($(#[$doc:meta])* $name:ident, $T:ty, $width:literal, $msr:literal) => {

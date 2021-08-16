@@ -215,7 +215,7 @@ macro_rules! mair_el_reg {
         }
 
         $(#[$doc])*
-        pub const $name: Reg = Reg {};
+        pub static mut $name: Reg = Reg {};
     };
 }
 
