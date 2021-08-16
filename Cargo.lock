@@ -44,15 +44,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
-name = "cortex-a"
-version = "6.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "509fc35485a2b4ddbacabe0bf2212cdfff88da93658608e5cc651afcb75b7733"
-dependencies = [
- "tock-registers",
-]
-
-[[package]]
 name = "goblin"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -80,8 +71,8 @@ name = "kernel-loader"
 version = "0.1.0"
 dependencies = [
  "bitflags",
- "cortex-a",
  "goblin",
+ "saturnus-cortex-a",
  "saturnus-semihosting",
  "static_assertions",
  "tock-registers",

@@ -2,7 +2,10 @@ use core::ptr;
 
 use cortex_a::{
     asm::barrier,
-    registers::{MAIR_EL1, SCTLR_EL1, TCR_EL1, TTBR0_EL1, TTBR1_EL1},
+    registers::{
+        mair_el::{MemoryAttributes, MAIR_ATTRIBUTE, MAIR_EL1},
+        SCTLR_EL1, TCR_EL1, TTBR0_EL1, TTBR1_EL1,
+    },
 };
 use tock_registers::{interfaces::Writeable, registers::InMemoryRegister};
 
@@ -164,20 +167,23 @@ pub unsafe extern "C" fn load_kernel(
 
     // setup MMU with initial identity mapping
     let mut ttbr1_table = PageTableMapper::new(&INITAL_PAGE_ALLOCATOR);
-    setup_initial_identity_mapping(
-        &mut ttbr1_table,
-        kernel_base,
-        kernel_map,
-        page_region,
-        page_region_size,
-    );
+    unsafe {
+        setup_initial_identity_mapping(
+            &mut ttbr1_table,
+            kernel_base,
+            kernel_map,
+            page_region,
+            page_region_size,
+        );
+    }
 
     todo!()
 }
 
 /// Identity maps the Kernel, Kernel Loader, and page region and then enables the MMU and switches
 /// into virtual memory.
-fn setup_initial_identity_mapping(
+#[allow(unsafe_op_in_unsafe_fn)]
+unsafe fn setup_initial_identity_mapping(
     ttbr1_table: &mut PageTableMapper,
     kbase: usize,
     kmap: &KernelMap,
@@ -208,11 +214,10 @@ fn setup_initial_identity_mapping(
         .unwrap();
 
     // identity map the loader
-    let (start, size) = unsafe {
+    let (start, size) = {
         let (start, end) = linker_symbol!(__start__, __end__);
         (start as usize, end as usize - start as usize)
     };
-    hprintln!("");
 
     ttbr0_table
         .map_many(
@@ -240,13 +245,18 @@ fn setup_initial_identity_mapping(
     TTBR1_EL1.set(ttbr1_table.root_ptr() as u64);
 
     // configure memory attributes (MAIR) and translation control (TCR)
-    MAIR_EL1.write(
-        MAIR_EL1::Attr1_Device::nonGathering_nonReordering_EarlyWriteAck
-            + MAIR_EL1::Attr2_Normal_Inner::WriteBack_NonTransient_ReadWriteAlloc
-            + MAIR_EL1::Attr2_Normal_Outer::WriteBack_NonTransient_ReadWriteAlloc
-            + MAIR_EL1::Attr3_Normal_Inner::NonCacheable
-            + MAIR_EL1::Attr3_Normal_Outer::NonCacheable,
-    );
+    #[rustfmt::skip]
+    let attrs = {
+        use MAIR_ATTRIBUTE::*;
+
+        let a = MemoryAttributes::new();
+        a.attr::<1>().write(Device::NonGatheringNonReorderingEarlyWriteAck);
+        a.attr::<2>().write(NormalInner::WriteBackNonTransientReadWrite + NormalOuter::WriteBackNonTransientReadWrite);
+        a.attr::<3>().write(NormalInner::NonCacheable + NormalOuter::NonCacheable);
+        a
+    };
+
+    MAIR_EL1.set(attrs.bits());
 
     TCR_EL1.write(
         TCR_EL1::T0SZ.val(25)
@@ -264,9 +274,7 @@ fn setup_initial_identity_mapping(
     );
 
     // perform board / architecture specific setup
-    unsafe {
-        rt::arch_specific_setup();
-    }
+    rt::arch_specific_setup();
 
     // flush caches so page tables will be read once MMU is enabled
     todo!("flush caches");
@@ -274,9 +282,12 @@ fn setup_initial_identity_mapping(
     // enable the MMU!
     // FIXME: Replace with proper tock-register abstractions
     SCTLR_EL1.set(0x34D5D925);
-    unsafe {
-        barrier::dsb(barrier::SY);
-        barrier::isb(barrier::SY);
+
+    {
+        use barrier::*;
+
+        dsb::<SY>();
+        isb();
     }
 }
 

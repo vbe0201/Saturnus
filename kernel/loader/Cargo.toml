@@ -11,7 +11,7 @@ edition = "2021"
 
 [dependencies]
 saturnus-semihosting = { path = "../../crates/semihosting" }
-cortex-a = "6.0"
+cortex-a = { package = "saturnus-cortex-a", path = "../../crates/cortex-a" }
 tock-registers = "0.7"
 
 static_assertions = "1.1"

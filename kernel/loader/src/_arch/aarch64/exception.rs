@@ -31,7 +31,7 @@ pub unsafe fn setup_exception_vector() {
     VBAR_EL1.set(__exception_vector_table.get() as u64);
 
     // Force the register update to complete before next instruction.
-    asm::barrier::isb(asm::barrier::SY);
+    asm::barrier::isb();
 }
 
 // Wrapper structures around AArch64 system registers that allow pretty-printing
@@ -65,7 +65,7 @@ unsafe extern "C" fn default_exception_handler(e: &ExceptionContext) {
          FAR_EL1: {:#018x}\n\
          {}\n\
          {}",
-        FAR_EL1.get(),
+        unsafe { FAR_EL1.get() },
         EsrEl1,
         e
     );
@@ -82,7 +82,7 @@ impl fmt::Display for EsrEl1 {
         use ESR_EL1::EC::Value::*;
 
         // Extract a copy of the register in its current state.
-        let esr_el1 = ESR_EL1.extract();
+        let esr_el1 = unsafe { ESR_EL1.extract() };
 
         // Raw print the whole register.
         writeln!(f, "ESR_EL1: {:#010x}", esr_el1.get())?;

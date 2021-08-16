@@ -50,12 +50,11 @@ unsafe extern "C" fn save_register_state(state: &mut MaybeUninit<RegisterState>)
     )
 }
 
+#[allow(unsafe_op_in_unsafe_fn)]
 pub unsafe fn arch_specific_setup() {
     // save register state to TPIDR_EL1
     let mut register_state = MaybeUninit::<RegisterState>::uninit();
-    unsafe {
-        save_register_state(&mut register_state);
-    }
+    save_register_state(&mut register_state);
 
     // check which CPU we are running, and configure CPUECTLR, CPUACTLR appropriately
     let manufacture_id = MIDR_EL1.get();
@@ -114,8 +113,7 @@ pub unsafe fn arch_specific_setup() {
         };
 
         if let Some((cpuactlr, cpuectlr)) = ctlr_values {
-            unsafe {
-                asm!("
+            asm!("
                     // Set CPUACTLR_EL1 implementation defined register
                     msr S3_1_C15_C2_0, {cpua_ctlr}
 
@@ -127,11 +125,10 @@ pub unsafe fn arch_specific_setup() {
                     msr S3_1_C15_C2_1, {cpue_ctlr}
                 1:
                     ",
-                    cpua_ctlr = in(reg) cpuactlr,
-                    cpue_ctlr = in(reg) cpuectlr,
-                    tmp = out(reg) _
-                )
-            }
+                cpua_ctlr = in(reg) cpuactlr,
+                cpue_ctlr = in(reg) cpuectlr,
+                tmp = out(reg) _
+            )
         }
     }
 
