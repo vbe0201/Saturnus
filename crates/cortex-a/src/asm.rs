@@ -1,5 +1,7 @@
 //! Wrappers around common ARMv8-A instructions.
 
+pub mod barrier;
+
 /// The classic no-operation instruction.
 #[inline(always)]
 pub fn nop() {
