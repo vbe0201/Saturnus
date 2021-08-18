@@ -6,10 +6,11 @@
 //! [`cortex-a`]: https://crates.io/crates/cortex-a
 
 #![no_std]
-#![feature(asm)]
+#![feature(asm, const_panic)]
 #![deny(unsafe_op_in_unsafe_fn, rustdoc::broken_intra_doc_links)]
 // required to not warn about inline assembly constructs
 #![allow(unreachable_patterns)]
 
 pub mod asm;
+pub mod paging;
 pub mod registers;
