@@ -16,7 +16,7 @@ const UPPER_BITS_MASK: usize = !ADDRESS_BITS_MASK;
 ///
 /// If the alignment is not a power of two.
 #[inline(always)]
-pub const fn align_up(val: u64, align: u64) -> u64 {
+pub const fn align_up(val: usize, align: usize) -> usize {
     align_down(val + align - 1, align)
 }
 
@@ -26,7 +26,7 @@ pub const fn align_up(val: u64, align: u64) -> u64 {
 ///
 /// If the alignment is not a power of two.
 #[inline(always)]
-pub const fn align_down(val: u64, align: u64) -> u64 {
+pub const fn align_down(val: usize, align: usize) -> usize {
     assert!(align.is_power_of_two(), "'align' must be a power of two");
     val & !(align - 1)
 }
@@ -108,6 +108,55 @@ impl VirtAddr {
     pub fn as_mut_ptr<T>(self) -> *mut T {
         self.as_usize() as *mut T
     }
+
+    /// Align this address upwards to the given alignment.
+    ///
+    /// Note that this method will leave the upper bits of this address unchanged
+    ///
+    /// # Panics
+    ///
+    /// If the alignment is not a power of two.
+    #[inline]
+    pub fn align_up(self, align: usize) -> Self {
+        let upper = self.as_usize() & UPPER_BITS_MASK;
+        let addr = (align_up(self.as_usize(), align) & ADDRESS_BITS_MASK) | upper;
+
+        // Safety:
+        // We forward the upper bits of `self` into the result,
+        // and it's guaranteed that the upper bits of `self` are
+        // valid.
+        unsafe { Self::new_unchecked(addr) }
+    }
+
+    /// Align this address downwards to the given alignment.
+    ///
+    /// Note that this method will leave the upper bits of this address unchanged
+    ///
+    /// # Panics
+    ///
+    /// If the alignment is not a power of two.
+    #[inline]
+    pub fn align_down(self, align: usize) -> Self {
+        let upper = self.as_usize() & UPPER_BITS_MASK;
+        let addr = (align_down(self.as_usize(), align) & ADDRESS_BITS_MASK) | upper;
+
+        // Safety:
+        // We forward the upper bits of `self` into the result,
+        // and it's guaranteed that the upper bits of `self` are
+        // valid.
+        unsafe { Self::new_unchecked(addr) }
+    }
+
+    /// Check if this address is aligned to the given alignment.
+    ///
+    /// # Panics
+    ///
+    /// If the alignment is not a power of two.
+    #[inline]
+    pub fn is_aligned(self, align: usize) -> bool {
+        assert!(align.is_power_of_two(), "'align' must be a power of two");
+        self.0 & (align - 1) == 0
+    }
 }
 
 /// A physical memory address.
@@ -149,6 +198,37 @@ impl PhysAddr {
     #[inline]
     pub fn as_mut_ptr<T>(self) -> *mut T {
         self.as_usize() as *mut T
+    }
+
+    /// Align this address upwards to the given alignment.
+    ///
+    /// # Panics
+    ///
+    /// If the alignment is not a power of two.
+    #[inline]
+    pub fn align_up(self, align: usize) -> Self {
+        Self(align_up(self.as_usize(), align))
+    }
+
+    /// Align this address downwards to the given alignment.
+    ///
+    /// # Panics
+    ///
+    /// If the alignment is not a power of two.
+    #[inline]
+    pub fn align_down(self, align: usize) -> Self {
+        Self(align_down(self.as_usize(), align))
+    }
+
+    /// Check if this address is aligned to the given alignment.
+    ///
+    /// # Panics
+    ///
+    /// If the alignment is not a power of two.
+    #[inline]
+    pub fn is_aligned(self, align: usize) -> bool {
+        assert!(align.is_power_of_two(), "'align' must be a power of two");
+        self.0 & (align - 1) == 0
     }
 }
 
