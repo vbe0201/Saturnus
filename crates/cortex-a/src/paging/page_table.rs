@@ -129,10 +129,6 @@ where
             // allocate new table and make the current entry point to it
             let new_table =
                 Self::allocate_table(&self.allocator).ok_or(MapError::PageAllocationFailed)?;
-            {
-                extern crate std;
-                std::println!("{:p}", new_table);
-            }
             entry.set_table(new_table);
             Some(new_table)
         } else {
