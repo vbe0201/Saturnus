@@ -13,3 +13,4 @@ edition = "2021"
 
 [dependencies]
 tock-registers = { version = "0.7.x", default-features = false }
+bitflags = "1"

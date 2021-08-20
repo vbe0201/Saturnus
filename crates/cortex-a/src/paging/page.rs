@@ -17,9 +17,24 @@ macro_rules! define_page_sizes {
     };
 }
 
+#[rustfmt::skip]
 define_page_sizes![
-    /// 4 KiB constant used for identifying 4 KiB virtual memory pages.
+    /// 4 KiB large virtual memory page.
     _4K = 4 << 10,
+    /// 2 MiB large virtual memory page.
+    _2M = 2 << 20,
+    /// 1 GiB large virtual memory page.
+    _1G = 1 << 30,
+
+    /// 16 KiB large virtual memory page.
+    _16K = 16 << 10,
+    /// 32 MiB large virtual memory page.
+    _32M = 32 << 20,
+
+    /// 512 MiB large virtual memory page.
+    _512M = 512 << 20,
+    /// 64 KiB large virtual memory page.
+    _64K = 64 << 10,
 ];
 
 /// A struct which is used in combination with the [`SupportedPageSize`] trait
