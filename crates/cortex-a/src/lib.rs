@@ -14,3 +14,4 @@
 pub mod asm;
 pub mod paging;
 pub mod registers;
+pub mod utils;
