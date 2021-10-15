@@ -78,7 +78,7 @@ pub unsafe extern "C" fn relocate(base: *mut u8, dynamic: *const u8) -> Relocati
 
         // Apply the relocation.
         match reloc::r_type(rel.r_info) {
-            reloc::R_AARCH64_RELATIVE => {
+            R_ARCHITECTURE_SPECIFIC => {
                 let ptr = base.add(rel.r_offset as usize).cast::<usize>();
                 ptr.write(ptr.read() + base as usize);
             }
