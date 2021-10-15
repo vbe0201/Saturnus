@@ -5,11 +5,11 @@ use cortex_a::{
 
 type FreePageFramePtr = Option<&'static mut FreePageFrame>;
 
-pub struct FreePageList {
+struct FreePageList {
     head: FreePageFramePtr,
 }
 
-pub struct FreePageFrame {
+struct FreePageFrame {
     next: FreePageFramePtr,
     size: usize,
 }
@@ -62,6 +62,7 @@ impl FreePageFrame {
     }
 }
 
+///
 pub struct InitialPageAllocator {
     start_address: PhysAddr,
     next_free_address: PhysAddr,
@@ -135,4 +136,5 @@ unsafe impl PageAllocator for InitialPageAllocator {
     }
 }
 
+///
 pub struct InitialPageTable;
