@@ -4,25 +4,19 @@ use core::{fmt, ops};
 
 use crate::utils;
 
-/// The amount of bits any virtual address or physical address might have.
-///
-/// For this paging module to work correctly, you need to set `TxSZ` to `64 - ADDRESS_BITS`,
-/// because that's the only address space size it supports.
-pub const ADDRESS_BITS: usize = 49;
-
-const ADDRESS_BITS_MASK: usize = (1 << (ADDRESS_BITS - 1)) - 1;
-const UPPER_BITS_MASK: usize = !ADDRESS_BITS_MASK;
+const PHYS_UPPER_BITS_MASK: usize = !utils::bitmask(0, 52);
+const VIRT_UPPER_BITS_MASK: usize = !utils::bitmask(0, 48);
 
 /// Tried to create an address that was not valid.
 ///
-/// This means that the upper bits weren't all zeros or ones.
+/// This means that the upper bits weren't all zeroes or ones.
 #[derive(Debug)]
 pub struct MalformedAddress(usize);
 
 /// A virtual memory address.
 ///
 /// This is a wrapper type around an `usize`, which guarantees that the upper most
-/// bits are either all ones or zeros. The amount of upper bits is controlled by the
+/// bits are either all ones or zeroes. The amount of upper bits is controlled by the
 /// [`ADDRESS_BITS`] constant.
 ///
 /// All operator implementations (`Add`, `Sub`, etc) are wrapping operations (including in debug
@@ -60,8 +54,8 @@ impl VirtAddr {
     /// Returns an error if the address is malformed.
     #[inline]
     pub const fn try_new(addr: usize) -> Result<Self, MalformedAddress> {
-        match addr & UPPER_BITS_MASK {
-            0 | UPPER_BITS_MASK => Ok(Self(addr)),
+        match addr & VIRT_UPPER_BITS_MASK {
+            0 | 0xFFFF => Ok(Self(addr)),
             _ => Err(MalformedAddress(addr)),
         }
     }
@@ -74,6 +68,12 @@ impl VirtAddr {
     #[inline]
     pub const unsafe fn new_unchecked(addr: usize) -> Self {
         Self(addr)
+    }
+
+    /// Creates a new virtual address of `0`.
+    #[inline]
+    pub const fn zero() -> Self {
+        Self(0)
     }
 
     /// Converts this address to the inner `usize`.
@@ -103,14 +103,7 @@ impl VirtAddr {
     /// If the alignment is not a power of two.
     #[inline]
     pub const fn align_up(self, align: usize) -> Self {
-        let upper = self.as_usize() & UPPER_BITS_MASK;
-        let addr = (utils::align_up(self.as_usize(), align) & ADDRESS_BITS_MASK) | upper;
-
-        // Safety:
-        // We forward the upper bits of `self` into the result,
-        // and it's guaranteed that the upper bits of `self` are
-        // valid.
-        unsafe { Self::new_unchecked(addr) }
+        Self(utils::align_up(self.as_usize(), align))
     }
 
     /// Align this address downwards to the given alignment.
@@ -122,14 +115,7 @@ impl VirtAddr {
     /// If the alignment is not a power of two.
     #[inline]
     pub const fn align_down(self, align: usize) -> Self {
-        let upper = self.as_usize() & UPPER_BITS_MASK;
-        let addr = (utils::align_down(self.as_usize(), align) & ADDRESS_BITS_MASK) | upper;
-
-        // Safety:
-        // We forward the upper bits of `self` into the result,
-        // and it's guaranteed that the upper bits of `self` are
-        // valid.
-        unsafe { Self::new_unchecked(addr) }
+        Self(utils::align_down(self.as_usize(), align))
     }
 
     /// Check if this address is aligned to the given alignment.
@@ -160,10 +146,44 @@ impl PhysAddr {
         Self::new(ptr as usize)
     }
 
-    /// Creates a new physical address.
+    /// Creates a new physical address, which is guaranteed to be canonical.
+    ///
+    /// # Panics
+    ///
+    /// If the upper bits are not all zeros.
     #[inline]
     pub const fn new(addr: usize) -> Self {
+        match Self::try_new(addr) {
+            Ok(addr) => addr,
+            Err(_) => panic!("PhysAddr::new: address is malformed")
+        }
+    }
+
+    /// Tries to create a new physical address, which is guaranteed to be canonical.
+    ///
+    /// Returns an error if the address is malformed.
+    #[inline]
+    pub const fn try_new(addr: usize) -> Result<Self, MalformedAddress> {
+        match addr & PHYS_UPPER_BITS_MASK {
+            0 => Ok(Self(addr)),
+            _ => Err(MalformedAddress(addr)),
+        }
+    }
+
+    /// Create a new physical address without checking if it's malformed.
+    ///
+    /// # Safety
+    ///
+    /// The upper bits of the address must be all zeroes or ones.
+    #[inline]
+    pub const unsafe fn new_unchecked(addr: usize) -> Self {
         Self(addr)
+    }
+
+    /// Creates a new virtual address of `0`.
+    #[inline]
+    pub const fn zero() -> Self {
+        Self(0)
     }
 
     /// Converts this address to the inner `usize`.
@@ -265,12 +285,7 @@ impl ops::Add<usize> for VirtAddr {
 
     #[inline]
     fn add(self, rhs: usize) -> Self::Output {
-        let upper = self.as_usize() & UPPER_BITS_MASK;
-        let result = self.as_usize().wrapping_add(rhs);
-
-        // SAFETY: We forward the upper bits of `self` into the result,
-        // and it's guaranteed that the upper bits of `self` are valid.
-        unsafe { Self::new_unchecked((result & ADDRESS_BITS_MASK) | upper) }
+        Self(self.0.checked_add(rhs).unwrap())
     }
 }
 
@@ -302,12 +317,7 @@ impl ops::Sub<usize> for VirtAddr {
 
     #[inline]
     fn sub(self, rhs: usize) -> Self::Output {
-        let upper = self.as_usize() & UPPER_BITS_MASK;
-        let result = self.as_usize().wrapping_sub(rhs);
-
-        // SAFETY: We forward the upper bits of `self` into the result,
-        // and it's guaranteed that the upper bits of `self` are valid.
-        unsafe { Self::new_unchecked((result & ADDRESS_BITS_MASK) | upper) }
+        Self(self.0.checked_sub(rhs).unwrap())
     }
 }
 
