@@ -65,6 +65,9 @@ dependencies = [
 [[package]]
 name = "kernel"
 version = "0.1.0"
+dependencies = [
+ "saturnus-libkern",
+]
 
 [[package]]
 name = "kernel-loader"

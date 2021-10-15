@@ -1,6 +1,6 @@
 use core::panic::PanicInfo;
 
-use saturnus_semihosting::debug::{self, EXIT_FAILURE};
+use semihosting::debug::{self, EXIT_FAILURE};
 
 /// The panic handler of the loader application.
 #[inline(never)]

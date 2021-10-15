@@ -7,4 +7,4 @@ repository = "https://github.com/vbe0201/Saturnus"
 edition = "2021"
 
 [dependencies]
-libkern = { package = "saturnus-libkern", path = "../../crates/libkern" }
+libkern = { package = "saturnus-libkern", path = "../crates/libkern" }

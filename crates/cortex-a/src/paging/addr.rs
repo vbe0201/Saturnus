@@ -263,14 +263,13 @@ impl_fmt_traits!(for PhysAddr);
 impl ops::Add<usize> for VirtAddr {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: usize) -> Self::Output {
         let upper = self.as_usize() & UPPER_BITS_MASK;
         let result = self.as_usize().wrapping_add(rhs);
 
-        // Safety:
-        // We forward the upper bits of `self` into the result,
-        // and it's guaranteed that the upper bits of `self` are
-        // valid.
+        // SAFETY: We forward the upper bits of `self` into the result,
+        // and it's guaranteed that the upper bits of `self` are valid.
         unsafe { Self::new_unchecked((result & ADDRESS_BITS_MASK) | upper) }
     }
 }
@@ -278,22 +277,36 @@ impl ops::Add<usize> for VirtAddr {
 impl ops::Add for VirtAddr {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self::Output {
         self + rhs.as_usize()
+    }
+}
+
+impl ops::AddAssign<usize> for VirtAddr {
+    #[inline]
+    fn add_assign(&mut self, rhs: usize) {
+        *self = *self + rhs;
+    }
+}
+
+impl ops::AddAssign for VirtAddr {
+    #[inline]
+    fn add_assign(&mut self, rhs: Self) {
+        *self += rhs.as_usize();
     }
 }
 
 impl ops::Sub<usize> for VirtAddr {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: usize) -> Self::Output {
         let upper = self.as_usize() & UPPER_BITS_MASK;
         let result = self.as_usize().wrapping_sub(rhs);
 
-        // Safety:
-        // We forward the upper bits of `self` into the result,
-        // and it's guaranteed that the upper bits of `self` are
-        // valid.
+        // SAFETY: We forward the upper bits of `self` into the result,
+        // and it's guaranteed that the upper bits of `self` are valid.
         unsafe { Self::new_unchecked((result & ADDRESS_BITS_MASK) | upper) }
     }
 }
@@ -301,40 +314,87 @@ impl ops::Sub<usize> for VirtAddr {
 impl ops::Sub for VirtAddr {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
         self - rhs.as_usize()
+    }
+}
+
+impl ops::SubAssign<usize> for VirtAddr {
+    #[inline]
+    fn sub_assign(&mut self, rhs: usize) {
+        *self = *self - rhs;
+    }
+}
+
+impl ops::SubAssign for VirtAddr {
+    #[inline]
+    fn sub_assign(&mut self, rhs: Self) {
+        *self -= rhs.as_usize();
     }
 }
 
 impl ops::Add<usize> for PhysAddr {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: usize) -> Self::Output {
-        Self(self.0.wrapping_add(rhs))
+        Self(self.0.checked_add(rhs).unwrap())
     }
 }
 
 impl ops::Add for PhysAddr {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self::Output {
         self + rhs.as_usize()
+    }
+}
+
+impl ops::AddAssign<usize> for PhysAddr {
+    #[inline]
+    fn add_assign(&mut self, rhs: usize) {
+        *self = *self + rhs;
+    }
+}
+
+impl ops::AddAssign for PhysAddr {
+    #[inline]
+    fn add_assign(&mut self, rhs: Self) {
+        *self += rhs.as_usize();
     }
 }
 
 impl ops::Sub<usize> for PhysAddr {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: usize) -> Self::Output {
-        Self(self.0.wrapping_sub(rhs))
+        Self(self.0.checked_sub(rhs).unwrap())
     }
 }
 
 impl ops::Sub for PhysAddr {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
         self - rhs.as_usize()
+    }
+}
+
+impl ops::SubAssign<usize> for PhysAddr {
+    #[inline]
+    fn sub_assign(&mut self, rhs: usize) {
+        *self = *self - rhs;
+    }
+}
+
+impl ops::SubAssign for PhysAddr {
+    #[inline]
+    fn sub_assign(&mut self, rhs: Self) {
+        *self -= rhs.as_usize();
     }
 }
 
