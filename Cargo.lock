@@ -127,6 +127,9 @@ dependencies = [
 [[package]]
 name = "saturnus-libkern"
 version = "0.1.0"
+dependencies = [
+ "saturnus-cortex-a",
+]
 
 [[package]]
 name = "saturnus-semihosting"
