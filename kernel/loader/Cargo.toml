@@ -8,12 +8,13 @@ repository = "https://github.com/vbe0201/Saturnus"
 edition = "2021"
 
 [dependencies]
-saturnus-semihosting = { path = "../../crates/semihosting" }
 cortex-a = { package = "saturnus-cortex-a", path = "../../crates/cortex-a" }
-tock-registers = "0.7"
+libkern = { package = "saturnus-libkern", path = "../../crates/libkern" }
+semihosting = { package = "saturnus-semihosting", path = "../../crates/semihosting" }
 
-static_assertions = "1.1"
 goblin = { version = "0.4", default-features = false, features = ["elf64"] }
+tock-registers = "0.7"
+static_assertions = "1.1"
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 bitflags = "1"

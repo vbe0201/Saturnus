@@ -45,9 +45,9 @@ checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
 name = "goblin"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b1800b95efee8ad4ef04517d4d69f8e209e763b1668f1179aeeedd0e454da55"
+checksum = "32401e89c6446dcd28185931a01b1093726d0356820ac744023e6850689bf926"
 dependencies = [
  "plain",
  "scroll",
@@ -73,6 +73,7 @@ dependencies = [
  "bitflags",
  "goblin",
  "saturnus-cortex-a",
+ "saturnus-libkern",
  "saturnus-semihosting",
  "static_assertions",
  "tock-registers",
@@ -118,6 +119,10 @@ dependencies = [
  "bitflags",
  "tock-registers",
 ]
+
+[[package]]
+name = "saturnus-libkern"
+version = "0.1.0"
 
 [[package]]
 name = "saturnus-semihosting"
