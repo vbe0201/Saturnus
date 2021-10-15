@@ -2,34 +2,16 @@
 
 use core::{fmt, ops};
 
+use crate::utils;
+
 /// The amount of bits any virtual address or physical address might have.
 ///
 /// For this paging module to work correctly, you need to set `TxSZ` to `64 - ADDRESS_BITS`,
 /// because that's the only address space size it supports.
 pub const ADDRESS_BITS: usize = 49;
+
 const ADDRESS_BITS_MASK: usize = (1 << (ADDRESS_BITS - 1)) - 1;
 const UPPER_BITS_MASK: usize = !ADDRESS_BITS_MASK;
-
-/// Align a value upwards.
-///
-/// # Panics
-///
-/// If the alignment is not a power of two.
-#[inline(always)]
-pub const fn align_up(val: usize, align: usize) -> usize {
-    align_down(val + align - 1, align)
-}
-
-/// Align a value downwards.
-///
-/// # Panics
-///
-/// If the alignment is not a power of two.
-#[inline(always)]
-pub const fn align_down(val: usize, align: usize) -> usize {
-    assert!(align.is_power_of_two(), "'align' must be a power of two");
-    val & !(align - 1)
-}
 
 /// Tried to create an address that was not valid.
 ///
@@ -66,15 +48,18 @@ impl VirtAddr {
     ///
     /// If the upper bits are not all zeros or ones.
     #[inline]
-    pub fn new(addr: usize) -> Self {
-        Self::try_new(addr).expect("VirtAddr::new: address is malformed")
+    pub const fn new(addr: usize) -> Self {
+        match Self::try_new(addr) {
+            Ok(addr) => addr,
+            Err(_) => panic!("VirtAddr::new: address is malformed")
+        }
     }
 
     /// Tries to create a new virtual address, which is guaranteed to be canonical.
     ///
     /// Returns an error if the address is malformed.
     #[inline]
-    pub fn try_new(addr: usize) -> Result<Self, MalformedAddress> {
+    pub const fn try_new(addr: usize) -> Result<Self, MalformedAddress> {
         match addr & UPPER_BITS_MASK {
             0 | UPPER_BITS_MASK => Ok(Self(addr)),
             _ => Err(MalformedAddress(addr)),
@@ -87,7 +72,7 @@ impl VirtAddr {
     ///
     /// The upper bits of the address must be all zeros or ones.
     #[inline]
-    pub unsafe fn new_unchecked(addr: usize) -> Self {
+    pub const unsafe fn new_unchecked(addr: usize) -> Self {
         Self(addr)
     }
 
@@ -99,13 +84,13 @@ impl VirtAddr {
 
     /// Converts the address to a raw pointer.
     #[inline]
-    pub fn as_ptr<T>(self) -> *const T {
+    pub const fn as_ptr<T>(self) -> *const T {
         self.as_usize() as *const T
     }
 
     /// Converts the address to a raw pointer.
     #[inline]
-    pub fn as_mut_ptr<T>(self) -> *mut T {
+    pub const fn as_mut_ptr<T>(self) -> *mut T {
         self.as_usize() as *mut T
     }
 
@@ -117,9 +102,9 @@ impl VirtAddr {
     ///
     /// If the alignment is not a power of two.
     #[inline]
-    pub fn align_up(self, align: usize) -> Self {
+    pub const fn align_up(self, align: usize) -> Self {
         let upper = self.as_usize() & UPPER_BITS_MASK;
-        let addr = (align_up(self.as_usize(), align) & ADDRESS_BITS_MASK) | upper;
+        let addr = (utils::align_up(self.as_usize(), align) & ADDRESS_BITS_MASK) | upper;
 
         // Safety:
         // We forward the upper bits of `self` into the result,
@@ -136,9 +121,9 @@ impl VirtAddr {
     ///
     /// If the alignment is not a power of two.
     #[inline]
-    pub fn align_down(self, align: usize) -> Self {
+    pub const fn align_down(self, align: usize) -> Self {
         let upper = self.as_usize() & UPPER_BITS_MASK;
-        let addr = (align_down(self.as_usize(), align) & ADDRESS_BITS_MASK) | upper;
+        let addr = (utils::align_down(self.as_usize(), align) & ADDRESS_BITS_MASK) | upper;
 
         // Safety:
         // We forward the upper bits of `self` into the result,
@@ -153,9 +138,8 @@ impl VirtAddr {
     ///
     /// If the alignment is not a power of two.
     #[inline]
-    pub fn is_aligned(self, align: usize) -> bool {
-        assert!(align.is_power_of_two(), "'align' must be a power of two");
-        self.0 & (align - 1) == 0
+    pub const fn is_aligned(self, align: usize) -> bool {
+        utils::is_aligned(self.as_usize(), align)
     }
 }
 
@@ -178,7 +162,7 @@ impl PhysAddr {
 
     /// Creates a new physical address.
     #[inline]
-    pub fn new(addr: usize) -> Self {
+    pub const fn new(addr: usize) -> Self {
         Self(addr)
     }
 
@@ -190,13 +174,13 @@ impl PhysAddr {
 
     /// Converts the address to a raw pointer.
     #[inline]
-    pub fn as_ptr<T>(self) -> *const T {
+    pub const fn as_ptr<T>(self) -> *const T {
         self.as_usize() as *const T
     }
 
     /// Converts the address to a raw pointer.
     #[inline]
-    pub fn as_mut_ptr<T>(self) -> *mut T {
+    pub const fn as_mut_ptr<T>(self) -> *mut T {
         self.as_usize() as *mut T
     }
 
@@ -206,8 +190,8 @@ impl PhysAddr {
     ///
     /// If the alignment is not a power of two.
     #[inline]
-    pub fn align_up(self, align: usize) -> Self {
-        Self(align_up(self.as_usize(), align))
+    pub const fn align_up(self, align: usize) -> Self {
+        Self(utils::align_up(self.as_usize(), align))
     }
 
     /// Align this address downwards to the given alignment.
@@ -216,8 +200,8 @@ impl PhysAddr {
     ///
     /// If the alignment is not a power of two.
     #[inline]
-    pub fn align_down(self, align: usize) -> Self {
-        Self(align_down(self.as_usize(), align))
+    pub const fn align_down(self, align: usize) -> Self {
+        Self(utils::align_down(self.as_usize(), align))
     }
 
     /// Check if this address is aligned to the given alignment.
@@ -226,9 +210,8 @@ impl PhysAddr {
     ///
     /// If the alignment is not a power of two.
     #[inline]
-    pub fn is_aligned(self, align: usize) -> bool {
-        assert!(align.is_power_of_two(), "'align' must be a power of two");
-        self.0 & (align - 1) == 0
+    pub const fn is_aligned(self, align: usize) -> bool {
+        utils::is_aligned(self.as_usize(), align)
     }
 }
 
