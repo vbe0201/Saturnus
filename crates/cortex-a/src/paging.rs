@@ -12,11 +12,55 @@ mod page_table;
 pub use page_table::PageTable;
 
 mod error;
-pub use error::*;
+use core::ptr::NonNull;
 
 use bitflags::bitflags;
-use core::ptr::NonNull;
+pub use error::*;
 use page::{PageSize, SupportedPageSize};
+
+// TODO: Do a full cleanup.
+
+/// A trait that is able to allocate physical page frames with a static size.
+///
+/// The APIs are resistant against misuse in that they only allow statically
+/// validated and known page sizes. [`PhysAddr`]s are used to mark the starting
+/// address of pages in memory.
+///
+/// # Safety
+///
+/// Valid [`PhysAddr`]s representing the start addresses of physical page frames
+/// in memory must be returned. This implies correct alignment of the address.
+///
+/// The following `SIZE` bytes from that address may not be implicitly modified
+/// until a user explicitly frees the frame.
+pub unsafe trait PageAllocator {
+    /// Tries to allocate a single new page frame of `SIZE` bytes.
+    ///
+    /// On success the start address to the frame is returned, [`None`]
+    /// on failure.
+    ///
+    /// The allocated memory region may or may not have its contents
+    /// initialized and the user is responsible for correctly interacting
+    /// with it.
+    fn allocate<const SIZE: usize>(&self) -> Option<PhysAddr>
+    where
+        page::PageSize<SIZE>: page::SupportedPageSize;
+
+    /// Frees an allocated frame of `SIZE` bytes given its physical starting
+    /// address in memory.
+    ///
+    /// # Safety
+    ///
+    /// This method is wildly unsafe and will trigger UB if `addr` and `SIZE`
+    /// are not a matching pair from the [`PageAllocator::allocate`] operation
+    /// of that same allocator.
+    ///
+    /// Same goes if a frame has already been deallocated prior to calling this
+    /// function again.
+    unsafe fn free<const SIZE: usize>(&self, addr: PhysAddr)
+    where
+        page::PageSize<SIZE>: page::SupportedPageSize;
+}
 
 /// A trait that is able to allocate physical frames with a statically known size.
 ///
@@ -24,6 +68,7 @@ use page::{PageSize, SupportedPageSize};
 ///
 /// Memory blocks returned from an allocator must return physical addresses to blocks of `SIZE`
 /// bytes and the block must live until the block is freed
+// TODO: Replace all occurences of `FrameAllocator` with `PageAllocator`.
 pub unsafe trait FrameAllocator {
     /// Tries to allocate a single physical frame.
     ///

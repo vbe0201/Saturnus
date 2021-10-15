@@ -6,6 +6,13 @@ mod sealed {
     pub trait Sealed {}
 }
 
+/// A struct which is used in combination with the [`SupportedPageSize`] trait
+/// to ensure that the const generic represents a valid page size.
+pub struct PageSize<const SIZE: usize>;
+
+/// Trait that is used to ensure a [`PageSize`] object is valid.
+pub trait SupportedPageSize: sealed::Sealed {}
+
 macro_rules! define_page_sizes {
     ($(#[$doc:meta] $name:ident = $size:expr),*$(,)?) => {
         $(
@@ -36,13 +43,6 @@ define_page_sizes![
     /// 64 KiB large virtual memory page.
     _64K = 64 << 10,
 ];
-
-/// A struct which is used in combination with the [`SupportedPageSize`] trait
-/// to ensure that the const generic represents a valid page size.
-pub struct PageSize<const SIZE: usize>;
-
-/// Trait that is used to ensure a [`PageSize`] object is valid.
-pub trait SupportedPageSize: sealed::Sealed {}
 
 /// Error type used to indicate that a virtual address is not aligned
 /// to the page size.
