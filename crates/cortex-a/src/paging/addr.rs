@@ -55,7 +55,7 @@ impl VirtAddr {
     #[inline]
     pub const fn try_new(addr: usize) -> Result<Self, MalformedAddress> {
         match addr & VIRT_UPPER_BITS_MASK {
-            0 | 0xFFFF => Ok(Self(addr)),
+            0 | VIRT_UPPER_BITS_MASK => Ok(Self(addr)),
             _ => Err(MalformedAddress(addr)),
         }
     }
@@ -128,6 +128,8 @@ impl VirtAddr {
         utils::is_aligned(self.as_usize(), align)
     }
 }
+
+assert_eq_size!(VirtAddr, usize);
 
 /// A physical memory address.
 ///
@@ -234,6 +236,8 @@ impl PhysAddr {
         utils::is_aligned(self.as_usize(), align)
     }
 }
+
+assert_eq_size!(PhysAddr, usize);
 
 macro_rules! impl_fmt_traits {
     (for $for:ident) => {

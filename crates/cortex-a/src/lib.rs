@@ -11,6 +11,9 @@
 // required to not warn about inline assembly constructs
 #![allow(unreachable_patterns)]
 
+#[macro_use]
+extern crate static_assertions;
+
 pub mod asm;
 pub mod paging;
 pub mod registers;
