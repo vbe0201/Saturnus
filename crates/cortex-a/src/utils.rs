@@ -1,5 +1,51 @@
 //! Helper functions used throughout the crate.
 
+use core::mem;
+
+/// Returns the size of a given type in bits.
+///
+/// See [`std::mem::size_of`] for semantic information on how sizes in bytes are determined.
+/// This function merely converts such a value in bytes to bits.
+///
+/// # Examples
+///
+/// Basic usage:
+///
+/// ```
+/// use std::mem::size_of;
+/// use saturnus_cortex_a::mem::bit_size_of;
+///
+/// assert_eq!(size_of::<u32>(), 4);
+/// assert_eq!(bit_size_of::<u32>(), 32);
+/// ```
+#[inline]
+pub const fn bit_size_of<T>() -> usize {
+    mem::size_of::<T>() << 3
+}
+
+/// Returns the size of the pointed-to value in bits.
+///
+/// See [`std::mem::size_of_val`] for semantic information on how sizes in bytes are
+/// determined. This function merely converts such a value in bytes to bits.
+///
+/// # Examples
+///
+/// Basic usage:
+///
+/// ```
+/// use std::mem::size_of_val;
+/// use saturnus_cortex_a::mem::bit_size_of_val;
+///
+/// let x: u32 = 5;
+///
+/// assert_eq!(size_of_val(&x), 4);
+/// assert_eq!(bit_size_of_val(&x), 32);
+/// ```
+#[inline]
+pub fn bit_size_of_val<T: ?Sized>(val: &T) -> usize {
+    mem::size_of_val(val) << 3
+}
+
 /// Converts a given value in bits to bytes.
 ///
 /// # Examples
@@ -7,7 +53,7 @@
 /// Basic usage:
 ///
 /// ```
-/// use kronos_utils::bits::bits_to_bytes;
+/// use saturnus_cortex_a::bits::bits_to_bytes;
 ///
 /// assert_eq!(bits_to_bytes(32), 4);
 /// ```
@@ -23,7 +69,7 @@ pub const fn bits_to_bytes(nbits: usize) -> usize {
 /// Basic usage:
 ///
 /// ```
-/// use kronos_utils::bits::bytes_to_bits;
+/// use saturnus_cortex_a::bits::bytes_to_bits;
 ///
 /// assert_eq!(bytes_to_bits(4), 32);
 /// ```
@@ -39,7 +85,7 @@ pub const fn bytes_to_bits(nbytes: usize) -> usize {
 /// Basic usage:
 ///
 /// ```
-/// use kronos_utils::bits::least_significant_bits;
+/// use saturnus_cortex_a::bits::least_significant_bits;
 ///
 /// assert_eq!(least_significant_bits(3), 0b111);
 /// ```
@@ -56,7 +102,7 @@ pub const fn least_significant_bits(n: usize) -> usize {
 /// Basic usage:
 ///
 /// ```
-/// use kronos_utils::bits::bitmask;
+/// use saturnus_cortex_a::bits::bitmask;
 ///
 /// assert_eq!(bitmask(2, 6), 0b111100)
 /// ```
@@ -64,7 +110,6 @@ pub const fn least_significant_bits(n: usize) -> usize {
 pub const fn bitmask(start: usize, end: usize) -> usize {
     least_significant_bits(end) & !least_significant_bits(start)
 }
-
 
 /// Aligns value up to the next multiple of `align` and returns the result.
 ///

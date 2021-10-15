@@ -42,7 +42,7 @@ pub unsafe trait PageAllocator {
     /// The allocated memory region may or may not have its contents
     /// initialized and the user is responsible for correctly interacting
     /// with it.
-    fn allocate<const SIZE: usize>(&self) -> Option<PhysAddr>
+    fn allocate<const SIZE: usize>(&mut self) -> Option<PhysAddr>
     where
         page::PageSize<SIZE>: page::SupportedPageSize;
 
@@ -57,7 +57,7 @@ pub unsafe trait PageAllocator {
     ///
     /// Same goes if a frame has already been deallocated prior to calling this
     /// function again.
-    unsafe fn free<const SIZE: usize>(&self, addr: PhysAddr)
+    unsafe fn free<const SIZE: usize>(&mut self, addr: PhysAddr)
     where
         page::PageSize<SIZE>: page::SupportedPageSize;
 }
