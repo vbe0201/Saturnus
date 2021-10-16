@@ -18,7 +18,7 @@ pub trait False: sealed::Sealed {}
 ///
 /// # Example
 ///
-/// ```
+/// ```no_run
 /// use saturnus_libutils::assert::{Assert, False};
 ///
 /// fn non_null<const N: usize>()
@@ -39,3 +39,7 @@ pub trait False: sealed::Sealed {}
 pub struct Assert<const COND: bool>;
 
 impl<const COND: bool> sealed::Sealed for Assert<{ COND }> {}
+
+impl True for Assert<true> {}
+
+impl False for Assert<false> {}

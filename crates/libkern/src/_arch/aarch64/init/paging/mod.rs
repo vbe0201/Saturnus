@@ -1,5 +1,17 @@
-use cortex_a::paging::{granule, page, PageAllocator, PhysAddr};
-use libutils::mem;
+use cortex_a::paging::{page, PageAllocator, PhysAddr};
+use libutils::{
+    assert::{Assert, True},
+    mem,
+};
+
+// This is a historic relict from earlier days of the kernel when randomization
+// was initially implemented. The concept was to hold a 64-bit bit map where
+// every bit n would correspond to `next_free_address + 0x1000 * n` being free
+// or not. And when all the pages were allocated, they would add `UNIT_SIZE`
+// to the next free address. With undergoing kernel changes and the introduction
+// of `FreePageList`, this unit size was kept as what they previously had.
+// Although not strictly required. Thanks, SciresM.
+const UNIT_SIZE: usize = mem::bit_size_of::<u64>() * page::_4K;
 
 type FreePageFramePtr = Option<&'static mut FreePageFrame>;
 
@@ -86,7 +98,7 @@ impl InitialPageAllocator {
 
     fn try_allocate<const SIZE: usize>(&mut self, address: usize) -> Result<(), ()>
     where
-        page::PageSize<SIZE>: page::SupportedPageSize,
+        Assert<{ SIZE % page::_4K == 0 }>: True,
     {
         todo!()
     }
@@ -94,13 +106,13 @@ impl InitialPageAllocator {
     ///
     pub fn allocate_aligned<const SIZE: usize, const ALIGN: usize>(&mut self) -> PhysAddr
     where
-        page::PageSize<SIZE>: page::SupportedPageSize,
+        Assert<{ SIZE % page::_4K == 0 }>: True,
     {
         // Ensure that there are list nodes left for us.
         while !self.page_list.is_allocatable::<ALIGN, SIZE>() {
             unsafe {
-                self.free::<{ granule::_4K }>(self.next_free_address);
-                self.next_free_address += granule::_4K;
+                self.free::<{ UNIT_SIZE }>(self.next_free_address);
+                self.next_free_address += UNIT_SIZE;
             }
         }
 
@@ -117,18 +129,18 @@ impl InitialPageAllocator {
     }
 }
 
-unsafe impl PageAllocator for InitialPageAllocator {
+unsafe impl PageAllocator<{ page::_4K }> for InitialPageAllocator {
     #[inline]
     fn allocate<const SIZE: usize>(&mut self) -> Option<PhysAddr>
     where
-        page::PageSize<SIZE>: page::SupportedPageSize,
+        Assert<{ SIZE % page::_4K == 0 }>: True,
     {
         Some(self.allocate_aligned::<SIZE, SIZE>())
     }
 
     unsafe fn free<const SIZE: usize>(&mut self, addr: PhysAddr)
     where
-        page::PageSize<SIZE>: page::SupportedPageSize,
+        Assert<{ SIZE % page::_4K == 0 }>: True,
     {
         todo!()
     }

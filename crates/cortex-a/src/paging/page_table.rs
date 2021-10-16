@@ -1,9 +1,10 @@
+use core::ptr::NonNull;
+
 use super::{
     granule::{self, Granule, GranuleSupportsPage, SupportedGranule},
     page::{self, PageSize, SupportedPageSize},
     FrameAllocator, MapError, Page, PageFlags, PhysAddr, PhysFrame, VirtAddr,
 };
-use core::ptr::NonNull;
 
 /// Provides a way to translate physical addresses to virtual addresses.
 ///
@@ -28,7 +29,6 @@ where
 /// Operations on page tables with 4 KiB granule
 impl<P: PhysAddrTranslator, A> PageTable<P, A, { granule::_4K }>
 where
-    Granule<{ granule::_4K }>: SupportedGranule,
     A: FrameAllocator,
 {
     /// Creates a new page table.
@@ -212,8 +212,9 @@ impl Entry {
 mod tests {
     extern crate std;
 
-    use super::*;
     use std::alloc::{Allocator, Global, Layout};
+
+    use super::*;
 
     unsafe impl<A: Allocator> FrameAllocator for A {
         fn allocate<const SIZE: usize>(&self) -> Option<NonNull<[u8; SIZE]>> {

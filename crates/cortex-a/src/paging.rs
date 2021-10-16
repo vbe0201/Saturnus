@@ -1,22 +1,23 @@
 //! Abstractions for page tables and other paging related structures.
 
+use core::ptr::NonNull;
+
+use bitflags::bitflags;
+use libutils::assert::{Assert, True, False};
+
 pub mod addr;
-pub use addr::{PhysAddr, VirtAddr};
+pub use self::addr::{PhysAddr, VirtAddr};
 
 pub mod page;
-pub use page::{Page, PhysFrame};
+pub use self::page::{Page, PhysFrame};
 
 pub mod granule;
 
 mod page_table;
-pub use page_table::PageTable;
+pub use self::page_table::PageTable;
 
 mod error;
-use core::ptr::NonNull;
-
-use bitflags::bitflags;
-pub use error::*;
-use page::{PageSize, SupportedPageSize};
+pub use self::error::*;
 
 // TODO: Do a full cleanup.
 
@@ -33,21 +34,25 @@ use page::{PageSize, SupportedPageSize};
 ///
 /// The following `SIZE` bytes from that address may not be implicitly modified
 /// until a user explicitly frees the frame.
-pub unsafe trait PageAllocator {
-    /// Tries to allocate a single new page frame of `SIZE` bytes.
+pub unsafe trait PageAllocator<const PAGE_SIZE: usize>
+where
+    page::PageSize<PAGE_SIZE>: page::SupportedPageSize,
+{
+    /// Tries to allocate one or more new page frames of `SIZE` bytes
+    /// in total.
     ///
-    /// On success the start address to the frame is returned, [`None`]
-    /// on failure.
+    /// On success the start address to the (subsequent) frames is returned,
+    /// [`None`] on failure.
     ///
     /// The allocated memory region may or may not have its contents
     /// initialized and the user is responsible for correctly interacting
     /// with it.
     fn allocate<const SIZE: usize>(&mut self) -> Option<PhysAddr>
     where
-        page::PageSize<SIZE>: page::SupportedPageSize;
+        Assert<{ SIZE % PAGE_SIZE == 0 }>: True;
 
-    /// Frees an allocated frame of `SIZE` bytes given its physical starting
-    /// address in memory.
+    /// Frees one or more subsequently allocated frames of `SIZE` bytes in total
+    /// given their physical starting address in memory.
     ///
     /// # Safety
     ///
@@ -59,7 +64,7 @@ pub unsafe trait PageAllocator {
     /// function again.
     unsafe fn free<const SIZE: usize>(&mut self, addr: PhysAddr)
     where
-        page::PageSize<SIZE>: page::SupportedPageSize;
+        Assert<{ SIZE % PAGE_SIZE == 0 }>: True;
 }
 
 /// A trait that is able to allocate physical frames with a statically known size.
