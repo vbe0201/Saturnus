@@ -23,18 +23,18 @@ pub trait False: sealed::Sealed {}
 ///
 /// fn non_null<const N: usize>()
 /// where
-///     Assert<{ N == 0 }>: False,
+///     Assert::<{ N == 0 }>: False,
 /// {
 ///     // ...
 /// }
 ///
 /// // This works...
-/// non_null::<{ 1 }>();
-/// non_null::<{ 100 }>();
-/// non_null::<{ 12 }>();
+/// non_null::<1>();
+/// non_null::<100>();
+/// non_null::<12>();
 ///
 /// // ...but this would produce a compile error:
-/// //non_null::<{ 0 }>();
+/// //non_null::<0>();
 /// ```
 pub struct Assert<const COND: bool>;
 

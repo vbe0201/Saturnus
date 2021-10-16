@@ -73,13 +73,19 @@ impl FreePageFrame {
 }
 
 ///
-pub struct InitialPageAllocator {
+pub struct InitialPageAllocator<const PAGE_SIZE: usize>
+where
+    page::PageSize<PAGE_SIZE>: page::SupportedPageSize,
+{
     start_address: PhysAddr,
     next_free_address: PhysAddr,
     page_list: FreePageList,
 }
 
-impl InitialPageAllocator {
+impl<const PAGE_SIZE: usize> InitialPageAllocator<{ PAGE_SIZE }>
+where
+    page::PageSize<PAGE_SIZE>: page::SupportedPageSize,
+{
     ///
     pub const fn new() -> Self {
         Self {
@@ -98,7 +104,7 @@ impl InitialPageAllocator {
 
     fn try_allocate<const SIZE: usize>(&mut self, address: usize) -> Result<(), ()>
     where
-        Assert<{ SIZE % page::_4K == 0 }>: True,
+        Assert<{ SIZE % PAGE_SIZE == 0 }>: True,
     {
         todo!()
     }
@@ -106,12 +112,12 @@ impl InitialPageAllocator {
     ///
     pub fn allocate_aligned<const SIZE: usize, const ALIGN: usize>(&mut self) -> PhysAddr
     where
-        Assert<{ SIZE % page::_4K == 0 }>: True,
+        Assert<{ SIZE % PAGE_SIZE == 0 }>: True,
     {
         // Ensure that there are list nodes left for us.
         while !self.page_list.is_allocatable::<ALIGN, SIZE>() {
             unsafe {
-                self.free::<{ UNIT_SIZE }>(self.next_free_address);
+                //self.free::<UNIT_SIZE>(self.next_free_address);
                 self.next_free_address += UNIT_SIZE;
             }
         }
@@ -127,22 +133,35 @@ impl InitialPageAllocator {
             }
         }
     }
+
+    ///
+    pub fn free<const SIZE: usize>(&mut self, addr: PhysAddr)
+    where
+        Assert<{ SIZE % PAGE_SIZE == 0 }>: True,
+    {
+        todo!()
+    }
 }
 
-unsafe impl PageAllocator<{ page::_4K }> for InitialPageAllocator {
+unsafe impl<const PAGE_SIZE: usize> PageAllocator<{ PAGE_SIZE }>
+    for InitialPageAllocator<{ PAGE_SIZE }>
+where
+    page::PageSize<PAGE_SIZE>: page::SupportedPageSize,
+{
     #[inline]
     fn allocate<const SIZE: usize>(&mut self) -> Option<PhysAddr>
     where
-        Assert<{ SIZE % page::_4K == 0 }>: True,
+        Assert<{ SIZE % PAGE_SIZE == 0 }>: True,
     {
         Some(self.allocate_aligned::<SIZE, SIZE>())
     }
 
+    #[inline]
     unsafe fn free<const SIZE: usize>(&mut self, addr: PhysAddr)
     where
-        Assert<{ SIZE % page::_4K == 0 }>: True,
+        Assert<{ SIZE % PAGE_SIZE == 0 }>: True,
     {
-        todo!()
+        Self::free::<SIZE>(self, addr)
     }
 }
 

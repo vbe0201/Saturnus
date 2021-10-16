@@ -49,7 +49,7 @@ where
     /// with it.
     fn allocate<const SIZE: usize>(&mut self) -> Option<PhysAddr>
     where
-        Assert<{ SIZE % PAGE_SIZE == 0 }>: True;
+        Assert::<{ SIZE % PAGE_SIZE == 0 }>: True;
 
     /// Frees one or more subsequently allocated frames of `SIZE` bytes in total
     /// given their physical starting address in memory.
@@ -64,7 +64,7 @@ where
     /// function again.
     unsafe fn free<const SIZE: usize>(&mut self, addr: PhysAddr)
     where
-        Assert<{ SIZE % PAGE_SIZE == 0 }>: True;
+        Assert::<{ SIZE % PAGE_SIZE == 0 }>: True;
 }
 
 /// A trait that is able to allocate physical frames with a statically known size.
