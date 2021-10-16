@@ -6,12 +6,13 @@ use cortex_a::{
         mair_el::{MemoryAttributes, MAIR_ATTRIBUTE, MAIR_EL1},
         SCTLR_EL1, TCR_EL1, TTBR0_EL1, TTBR1_EL1,
     },
+    paging::{PhysAddr, VirtAddr},
 };
 use tock_registers::{interfaces::Writeable, registers::InMemoryRegister};
 
 use crate::{
     bsp,
-    paging::{PageTableMapper, PhysAddr, VirtAddr, PAGE_DESCRIPTOR},
+    paging::{PageTableMapper, PAGE_DESCRIPTOR},
     rt, INITAL_PAGE_ALLOCATOR,
 };
 
