@@ -129,7 +129,12 @@ name = "saturnus-libkern"
 version = "0.1.0"
 dependencies = [
  "saturnus-cortex-a",
+ "saturnus-libutils",
 ]
+
+[[package]]
+name = "saturnus-libutils"
+version = "0.1.0"
 
 [[package]]
 name = "saturnus-semihosting"

@@ -11,3 +11,4 @@ edition = "2021"
 
 [dependencies]
 cortex-a = { package = "saturnus-cortex-a", path = "../cortex-a" }
+libutils = { package = "saturnus-libutils", path = "../libutils" }

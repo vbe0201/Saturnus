@@ -1,0 +1,12 @@
+[package]
+name = "saturnus-libutils"
+version = "0.1.0"
+authors = ["Valentin B. <valentin.be@protonmail.com>"]
+description = "Common utilities used throughout the whole project."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/vbe0201/Saturnus"
+keywords = ["utilities", "library"]
+categories = ["no-std", "embedded"]
+edition = "2021"
+
+[dependencies]
