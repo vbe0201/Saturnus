@@ -1,7 +1,5 @@
-use cortex_a::{
-    paging::{granule, page, PageAllocator, PhysAddr},
-    utils,
-};
+use cortex_a::paging::{granule, page, PageAllocator, PhysAddr};
+use libutils::mem;
 
 type FreePageFramePtr = Option<&'static mut FreePageFrame>;
 
@@ -29,7 +27,7 @@ impl FreePageList {
         while let Some(frame) = current_frame {
             // Check if the frame is large enough to fit the whole allocation.
             let frame_last_addr = frame.address() + frame.size() - 1;
-            let alloc_last_addr = utils::align_up(frame.address(), ALIGN) + SIZE - 1;
+            let alloc_last_addr = mem::align_up(frame.address(), ALIGN) + SIZE - 1;
             if alloc_last_addr <= frame_last_addr {
                 return true;
             }
@@ -107,8 +105,8 @@ impl InitialPageAllocator {
         }
 
         // Find a random address and allocate memory there.
-        let aligned_start = utils::align_up(self.start_address.as_usize(), ALIGN);
-        let aligned_end = utils::align_down(self.next_free_address.as_usize(), ALIGN);
+        let aligned_start = mem::align_up(self.start_address.as_usize(), ALIGN);
+        let aligned_end = mem::align_down(self.next_free_address.as_usize(), ALIGN);
         loop {
             // TODO: Generate real random address.
             let random_address = aligned_start;

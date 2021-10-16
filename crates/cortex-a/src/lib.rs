@@ -17,4 +17,3 @@ extern crate static_assertions;
 pub mod asm;
 pub mod paging;
 pub mod registers;
-pub mod utils;

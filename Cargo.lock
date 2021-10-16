@@ -120,6 +120,7 @@ name = "saturnus-cortex-a"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+ "saturnus-libutils",
  "static_assertions",
  "tock-registers",
 ]

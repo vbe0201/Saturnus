@@ -2,10 +2,10 @@
 
 use core::{fmt, ops};
 
-use crate::utils;
+use libutils::{bits, mem};
 
-const PHYS_UPPER_BITS_MASK: usize = !utils::bitmask(0, 52);
-const VIRT_UPPER_BITS_MASK: usize = !utils::bitmask(0, 48);
+const PHYS_UPPER_BITS_MASK: usize = !bits::bitmask(0, 52);
+const VIRT_UPPER_BITS_MASK: usize = !bits::bitmask(0, 48);
 
 /// Tried to create an address that was not valid.
 ///
@@ -103,7 +103,7 @@ impl VirtAddr {
     /// If the alignment is not a power of two.
     #[inline]
     pub const fn align_up(self, align: usize) -> Self {
-        Self(utils::align_up(self.as_usize(), align))
+        Self(mem::align_up(self.as_usize(), align))
     }
 
     /// Align this address downwards to the given alignment.
@@ -115,7 +115,7 @@ impl VirtAddr {
     /// If the alignment is not a power of two.
     #[inline]
     pub const fn align_down(self, align: usize) -> Self {
-        Self(utils::align_down(self.as_usize(), align))
+        Self(mem::align_down(self.as_usize(), align))
     }
 
     /// Check if this address is aligned to the given alignment.
@@ -125,7 +125,7 @@ impl VirtAddr {
     /// If the alignment is not a power of two.
     #[inline]
     pub const fn is_aligned(self, align: usize) -> bool {
-        utils::is_aligned(self.as_usize(), align)
+        mem::is_aligned(self.as_usize(), align)
     }
 }
 
@@ -213,7 +213,7 @@ impl PhysAddr {
     /// If the alignment is not a power of two.
     #[inline]
     pub const fn align_up(self, align: usize) -> Self {
-        Self(utils::align_up(self.as_usize(), align))
+        Self(mem::align_up(self.as_usize(), align))
     }
 
     /// Align this address downwards to the given alignment.
@@ -223,7 +223,7 @@ impl PhysAddr {
     /// If the alignment is not a power of two.
     #[inline]
     pub const fn align_down(self, align: usize) -> Self {
-        Self(utils::align_down(self.as_usize(), align))
+        Self(mem::align_down(self.as_usize(), align))
     }
 
     /// Check if this address is aligned to the given alignment.
@@ -233,7 +233,7 @@ impl PhysAddr {
     /// If the alignment is not a power of two.
     #[inline]
     pub const fn is_aligned(self, align: usize) -> bool {
-        utils::is_aligned(self.as_usize(), align)
+        mem::is_aligned(self.as_usize(), align)
     }
 }
 
