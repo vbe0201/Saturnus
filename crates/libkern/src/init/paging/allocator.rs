@@ -1,6 +1,8 @@
 use cortex_a::paging::{page, PageAllocator, PhysAddr};
 use libutils::mem;
 
+use crate::system_control;
+
 // This is a historic relict from earlier days of the kernel when randomization
 // were initially implemented. The concept was to hold a 64-bit bitmap where
 // every bit n would correspond to `next_free_address + 0x100 * n` being free
@@ -116,6 +118,10 @@ impl InitialPageAllocator {
         self.next_free_address = PhysAddr::new(base);
     }
 
+    fn try_allocate(&mut self, address: usize, size: usize) -> Result<(), ()> {
+        todo!()
+    }
+
     /// Attempts to allocate pages of `SIZE` bytes in total with a customized
     /// address alignment of `ALIGN`.
     pub fn allocate_aligned(&mut self, size: usize, align: usize) -> PhysAddr {
@@ -130,10 +136,13 @@ impl InitialPageAllocator {
         // Find a random address and allocate memory there.
         let aligned_start = mem::align_up(self.start_address.as_usize(), align);
         let aligned_end = mem::align_down(self.next_free_address.as_usize(), align);
+        let max_range = ((aligned_end - aligned_start) / align) - 1;
         loop {
-            // TODO: Generate real random addresses.
-            let random_address = aligned_start;
-            todo!()
+            let random_address =
+                aligned_start + system_control::init::generate_random_range(0, max_range) * align;
+            if self.try_allocate(random_address, size).is_ok() {
+                return unsafe { PhysAddr::new_unchecked(random_address) };
+            }
         }
     }
 }

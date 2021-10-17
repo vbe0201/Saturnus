@@ -12,3 +12,5 @@
 #![feature(const_mut_refs, generic_const_exprs)]
 
 pub mod init;
+pub mod smc;
+pub mod system_control;
