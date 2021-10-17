@@ -3,7 +3,6 @@
 use core::ptr::NonNull;
 
 use bitflags::bitflags;
-use libutils::assert::{Assert, True, False};
 
 pub mod addr;
 pub use self::addr::{PhysAddr, VirtAddr};
@@ -34,11 +33,8 @@ pub use self::error::*;
 ///
 /// The following `SIZE` bytes from that address may not be implicitly modified
 /// until a user explicitly frees the frame.
-pub unsafe trait PageAllocator<const PAGE_SIZE: usize>
-where
-    page::PageSize<PAGE_SIZE>: page::SupportedPageSize,
-{
-    /// Tries to allocate one or more new page frames of `SIZE` bytes
+pub unsafe trait PageAllocator {
+    /// Tries to allocate one or more new page frames of `size` bytes
     /// in total.
     ///
     /// On success the start address to the (subsequent) frames is returned,
@@ -47,11 +43,9 @@ where
     /// The allocated memory region may or may not have its contents
     /// initialized and the user is responsible for correctly interacting
     /// with it.
-    fn allocate<const SIZE: usize>(&mut self) -> Option<PhysAddr>
-    where
-        Assert::<{ SIZE % PAGE_SIZE == 0 }>: True;
+    fn allocate(&mut self, size: usize) -> Option<PhysAddr>;
 
-    /// Frees one or more subsequently allocated frames of `SIZE` bytes in total
+    /// Frees one or more subsequently allocated frames of `size` bytes in total
     /// given their physical starting address in memory.
     ///
     /// # Safety
@@ -62,9 +56,7 @@ where
     ///
     /// Same goes if a frame has already been deallocated prior to calling this
     /// function again.
-    unsafe fn free<const SIZE: usize>(&mut self, addr: PhysAddr)
-    where
-        Assert::<{ SIZE % PAGE_SIZE == 0 }>: True;
+    unsafe fn free(&mut self, addr: PhysAddr, size: usize);
 }
 
 /// A trait that is able to allocate physical frames with a statically known size.
