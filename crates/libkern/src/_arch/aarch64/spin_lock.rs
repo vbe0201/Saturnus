@@ -1,5 +1,7 @@
 use core::cell::UnsafeCell;
 
+use crate::scoped_lock::LockApi;
+
 #[repr(transparent)]
 pub struct UnalignedSpinLock {
     packed_tickets: UnsafeCell<u32>,
@@ -22,7 +24,7 @@ impl UnalignedSpinLock {
         let _temp2: u32;
 
         unsafe {
-            let mut _packed_tickets = self.packed_tickets.get() as usize;
+            let mut _packed_tickets = self.packed_tickets.get();
             asm!(
                 r#"
                     prfm pstl1keep, [{packed_tickets:x}]
@@ -58,7 +60,7 @@ impl UnalignedSpinLock {
     pub fn unlock(&self) {
         unsafe {
             let value = *self.packed_tickets.get() + 1;
-            let mut _packed_tickets = self.packed_tickets.get() as usize;
+            let mut _packed_tickets = self.packed_tickets.get();
             asm!(
                 r#"
                 stlrh {0:w}, [{packed_tickets:x}]
@@ -72,3 +74,15 @@ impl UnalignedSpinLock {
 
 unsafe impl Sync for UnalignedSpinLock {}
 unsafe impl Send for UnalignedSpinLock {}
+
+unsafe impl LockApi for UnalignedSpinLock {
+    #[inline(always)]
+    fn lock(&self) {
+        Self::lock(self)
+    }
+
+    #[inline(always)]
+    fn unlock(&self) {
+        Self::unlock(self)
+    }
+}
