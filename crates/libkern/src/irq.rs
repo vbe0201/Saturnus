@@ -1,6 +1,77 @@
 //! Handling and processing of interrupts for the executing core.
 
+use std::fmt;
+
+/// A scoped guard that temporarily disables interrupts for the executing core
+/// until the object is dropped.
+pub struct ScopedInterruptDisable {
+    state: InterruptState,
+}
+
+impl ScopedInterruptDisable {
+    /// Starts a critical section in which all interrupts are disabled.
+    ///
+    /// This will automatically manage the restoration of the previous interrupt
+    /// state with the drop of the resulting object.
+    ///
+    /// # Safety
+    ///
+    /// This is hardware land. Use cautiously.
+    #[inline(always)]
+    pub unsafe fn start() -> Self {
+        ScopedInterruptDisable {
+            state: unsafe { disable_interrupts() },
+        }
+    }
+}
+
+impl Drop for ScopedInterruptDisable {
+    /// Restores the executing core to its interrupt state prior to the creation
+    /// of the [`ScopedInterruptDisable`] object.
+    #[inline(always)]
+    fn drop(&mut self) {
+        // SAFETY: The implications have already been evaluated on
+        // creation of the object with `ScopedInterruptDisable::start`.
+        unsafe { restore_interrupts(self.state) }
+    }
+}
+
+/// A scoped guard that temporarily enables interrupts for the executing core
+/// until the object is dropped.
+pub struct ScopedInterruptEnable {
+    state: InterruptState,
+}
+
+impl ScopedInterruptEnable {
+    /// Starts a critical section in which all interrupts are enabled.
+    ///
+    /// This will automatically manage the restoration of the previous interrupt
+    /// state with the drop of the resulting object.
+    ///
+    /// # Safety
+    ///
+    /// This is hardware land. Use cautiously.
+    #[inline(always)]
+    pub unsafe fn start() -> Self {
+        ScopedInterruptEnable {
+            state: unsafe { enable_interrupts() },
+        }
+    }
+}
+
+impl Drop for ScopedInterruptEnable {
+    /// Restores the executing core to its interrupt state prior to the creation
+    /// of the [`ScopedInterruptEnable`] object.
+    #[inline(always)]
+    fn drop(&mut self) {
+        // SAFETY: The implications have already been evaluated on
+        // creation of the object with `ScopedInterruptEnable::start`.
+        unsafe { restore_interrupts(self.state) }
+    }
+}
+
 /// Represents the interrupt state that is configured for the executing core.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u32)]
 pub enum InterruptState {
     /// Interrupts enabled on the execution core.
