@@ -2,41 +2,16 @@
 
 use core::fmt::{self, Write};
 
+use libkern::irq::ScopedInterruptDisable;
+
 use crate::host::HostStream;
 
 static mut HSTDOUT: Option<HostStream> = None;
 static mut HSTDERR: Option<HostStream> = None;
 
 fn interrupt_free<R>(f: impl FnOnce() -> R) -> R {
-    // Disable interrupts.
-    let daif_old: u64;
-    unsafe {
-        asm!(
-            "mrs {}, daif",
-            "msr daifset, #2",
-            out(reg) daif_old,
-            options(nomem, nostack)
-        );
-    }
-
-    let ret = f();
-
-    // Re-enable interrupts.
-    let cur_daif: u64;
-    unsafe {
-        asm!(
-            "mrs {}, daif",
-            out(reg) cur_daif,
-            options(nostack)
-        );
-        asm!(
-            "msr daif, {:x}",
-            in(reg) ((cur_daif & !0x80) as u32) | (daif_old & 0x80) as u32,
-            options(nomem, nostack)
-        );
-    }
-
-    ret
+    let _irq_guard = unsafe { ScopedInterruptDisable::start() };
+    f()
 }
 
 #[allow(clippy::result_unit_err)]

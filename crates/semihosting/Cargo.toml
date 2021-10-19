@@ -10,3 +10,4 @@ categories = ["no-std", "embedded"]
 edition = "2021"
 
 [dependencies]
+libkern = { package = "saturnus-libkern", path = "../libkern" }

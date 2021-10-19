@@ -142,6 +142,9 @@ version = "0.1.0"
 [[package]]
 name = "saturnus-semihosting"
 version = "0.1.0"
+dependencies = [
+ "saturnus-libkern",
+]
 
 [[package]]
 name = "scroll"
