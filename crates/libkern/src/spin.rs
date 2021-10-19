@@ -1,8 +1,6 @@
 //! Implementations of cache-aligned and unaligned spin locks as
 //! synchronization primitives.
 
-use core::cell::UnsafeCell;
-
 use crate::scoped_lock::ScopedLock;
 
 /// A [spin lock](https://en.m.wikipedia.org/wiki/Spinlock) providing mutually

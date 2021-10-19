@@ -7,15 +7,16 @@
 //! * generic enough to be usable outside of the kernel itself.
 
 #![no_std]
-#![allow(incomplete_features)]
+#![allow(unreachable_patterns)]
 #![deny(unsafe_op_in_unsafe_fn, rustdoc::broken_intra_doc_links)]
-#![feature(asm, const_fn_trait_bound, const_mut_refs, generic_const_exprs)]
+#![feature(asm, const_fn_trait_bound, const_mut_refs)]
 
 #[macro_use]
 extern crate static_assertions;
 
 pub mod init;
+pub mod irq;
 pub mod scoped_lock;
 pub mod smc;
-pub mod spin_lock;
+pub mod spin;
 pub mod system_control;

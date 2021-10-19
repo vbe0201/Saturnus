@@ -132,6 +132,7 @@ dependencies = [
  "saturnus-cortex-a",
  "saturnus-libutils",
  "static_assertions",
+ "tock-registers",
 ]
 
 [[package]]
