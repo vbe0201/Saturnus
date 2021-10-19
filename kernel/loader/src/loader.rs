@@ -2,11 +2,11 @@ use core::ptr;
 
 use cortex_a::{
     asm::barrier,
+    paging::{PhysAddr, VirtAddr},
     registers::{
         mair_el::{MemoryAttributes, MAIR_ATTRIBUTE, MAIR_EL1},
         SCTLR_EL1, TCR_EL1, TTBR0_EL1, TTBR1_EL1,
     },
-    paging::{PhysAddr, VirtAddr},
 };
 use tock_registers::{interfaces::Writeable, registers::InMemoryRegister};
 
