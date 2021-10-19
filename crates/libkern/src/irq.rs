@@ -1,9 +1,8 @@
 //! Handling and processing of interrupts for the executing core.
 
-use std::fmt;
-
 /// A scoped guard that temporarily disables interrupts for the executing core
 /// until the object is dropped.
+#[derive(Debug)]
 pub struct ScopedInterruptDisable {
     state: InterruptState,
 }
@@ -38,6 +37,7 @@ impl Drop for ScopedInterruptDisable {
 
 /// A scoped guard that temporarily enables interrupts for the executing core
 /// until the object is dropped.
+#[derive(Debug)]
 pub struct ScopedInterruptEnable {
     state: InterruptState,
 }
