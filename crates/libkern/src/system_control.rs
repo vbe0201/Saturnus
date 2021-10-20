@@ -15,6 +15,7 @@ pub mod init {
         let mut bytes = [0; mem::size_of::<usize>()];
         smc::init::generate_random_bytes(&mut bytes);
 
-        usize::from_ne_bytes(bytes) % (max - min + 1) + min
+        let range_size = max - min + 1;
+        min + usize::from_ne_bytes(bytes) % range_size
     }
 }
