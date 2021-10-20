@@ -101,6 +101,25 @@ pub fn generate_random_bytes(buf: &mut [u8]) {
 
 /// SMCs used throughout early kernel bootstrap.
 pub mod init {
+    use super::{result, Function, SecureMonitorArguments};
+
+    #[allow(unsafe_op_in_unsafe_fn)]
+    unsafe fn call_privileged_secure_monitor_function(args: &mut SecureMonitorArguments) {
+        // Perform the SMC with all registers as inputs where we also store the results.
+        asm!(
+            "smc #1",
+            inlateout("x0") args.x[0],
+            inlateout("x1") args.x[1],
+            inlateout("x2") args.x[2],
+            inlateout("x3") args.x[3],
+            inlateout("x4") args.x[4],
+            inlateout("x5") args.x[5],
+            inlateout("x6") args.x[6],
+            inlateout("x7") args.x[7],
+            options(nostack, nomem),
+        )
+    }
+
     /// Generates random bytes using the Secure Monitor's access to the Tegra
     /// Security Engine's CPRNG.
     pub fn generate_random_bytes<T>() -> Result<T, ()> {
