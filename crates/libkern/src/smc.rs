@@ -101,6 +101,8 @@ pub fn generate_random_bytes(buf: &mut [u8]) {
 
 /// SMCs used throughout early kernel bootstrap.
 pub mod init {
+    use core::{mem::size_of, ptr};
+
     use super::{result, Function, SecureMonitorArguments};
 
     #[allow(unsafe_op_in_unsafe_fn)]
@@ -120,9 +122,44 @@ pub mod init {
         )
     }
 
-    /// Generates random bytes using the Secure Monitor's access to the Tegra
-    /// Security Engine's CPRNG.
-    pub fn generate_random_bytes<T>() -> Result<T, ()> {
-        todo!()
+    /// Generates random bytes using the Secure Monitor.
+    ///
+    /// This overrides the contents of the entire `buf` slice with the newly
+    /// generated data.
+    ///
+    /// # Panics
+    ///
+    /// Panics when `buf` exceeds a length of `0x38` bytes in total, which is
+    /// a conceptual limit for how many random bytes can be generated.
+    pub fn generate_random_bytes(buf: &mut [u8]) {
+        // This Secure Monitor call takes the size of bytes to generate in `x1`
+        // and then overwrites `x1`-`x7` with quad words of random bytes. We
+        // need to make sure that the user is not requesting a number of bytes
+        // that we don't actually have the capacity to store inside the output.
+        assert!(buf.len() <= size_of::<SecureMonitorArguments>() - size_of::<u64>());
+
+        // Prepare the arguments for a call to `GetRandomBytes`.
+        let mut args = SecureMonitorArguments::default();
+        args.x[0] = Function::GenerateRandomBytes as u64;
+        args.x[1] = buf.len() as u64;
+
+        // Call the Secure Monitor.
+        unsafe {
+            call_privileged_secure_monitor_function(&mut args);
+        }
+
+        // Make sure that the SMC was successful and trigger a kernel panic otherwise.
+        assert_eq!(args.x[0], result::SMC_SUCCESS);
+
+        // Copy the resulting bytes from the output pointer to `buf`.
+        unsafe {
+            // SAFETY: The result from the SMC was validated and we can thereby
+            // assume that we got a valid pointer at `size` bytes for us to copy.
+            ptr::copy_nonoverlapping(
+                args.x[1..].as_ptr() as *const u8,
+                buf.as_mut_ptr(),
+                buf.len(),
+            );
+        }
     }
 }
