@@ -10,7 +10,7 @@ use crate::sync::SpinLock;
 mod rand;
 
 static RAND: SpinLock<rand::MtRand> = SpinLock::new(rand::MtRand::new(crc32(include_bytes!(
-    "./generic/seed.png"
+    "./generic/nvidia.png"
 ))));
 
 pub mod init {
