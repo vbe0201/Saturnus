@@ -7,7 +7,7 @@ use crate::sync::SpinLock;
 #[path = "generic/rand.rs"]
 mod rand;
 
-static RAND: SpinLock<rand::MtRand> = SpinLock::new(rand::MtRand::new(0x2394D030));
+static RAND: SpinLock<rand::MtRand> = SpinLock::new(rand::MtRand::new(0x44bf1768));
 
 pub mod init {
     // difference between `init` namespace and normal one is only present
