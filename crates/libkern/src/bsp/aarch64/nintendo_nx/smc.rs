@@ -3,7 +3,9 @@
 
 use core::{mem::size_of, ptr};
 
-use crate::{irq::ScopedInterruptDisable, spin::SpinLock};
+use static_assertions::assert_eq_size;
+
+use crate::{irq::ScopedInterruptDisable, sync::SpinLock};
 
 // TODO: Make SMCs board-specific for Nintendo Switch.
 

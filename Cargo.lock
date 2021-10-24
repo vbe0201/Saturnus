@@ -141,6 +141,7 @@ dependencies = [
  "lock_api",
  "saturnus-cortex-a",
  "saturnus-libutils",
+ "spin",
  "static_assertions",
  "tock-registers",
 ]
@@ -173,6 +174,15 @@ name = "semver"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "568a8e6258aa33c13358f81fd834adb854c6f7c9468520910a9b1e8fac068012"
+
+[[package]]
+name = "spin"
+version = "0.9.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "511254be0c5bcf062b019a6c89c01a664aa359ded62f78aa72c6fc137c0590e5"
+dependencies = [
+ "lock_api",
+]
 
 [[package]]
 name = "static_assertions"

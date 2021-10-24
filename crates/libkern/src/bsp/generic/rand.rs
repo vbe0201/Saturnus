@@ -1,8 +1,5 @@
 use core::mem::size_of;
 
-/// The default seed for a [`MtRand`].
-pub const DEFAULT_SEED: u32 = 5489_u32;
-
 const STATE_SIZE: usize = 624;
 const MIDDLE: usize = 397;
 const INIT_FACT: u32 = 1_812_433_253;

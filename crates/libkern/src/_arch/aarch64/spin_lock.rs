@@ -1,6 +1,6 @@
 use core::cell::UnsafeCell;
 
-use crate::scoped_lock::LockApi;
+use static_assertions::assert_eq_size;
 
 #[repr(transparent)]
 pub struct UnalignedSpinLock {
@@ -75,14 +75,23 @@ impl UnalignedSpinLock {
 unsafe impl Sync for UnalignedSpinLock {}
 unsafe impl Send for UnalignedSpinLock {}
 
-unsafe impl LockApi for UnalignedSpinLock {
+unsafe impl lock_api::RawMutex for UnalignedSpinLock {
+    const INIT: UnalignedSpinLock = Self::new();
+
+    type GuardMarker = lock_api::GuardSend;
+
     #[inline(always)]
     fn lock(&self) {
         Self::lock(self)
     }
 
     #[inline(always)]
-    fn unlock(&self) {
+    fn try_lock(&self) -> bool {
+        todo!()
+    }
+
+    #[inline(always)]
+    unsafe fn unlock(&self) {
         Self::unlock(self)
     }
 }
