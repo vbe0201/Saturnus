@@ -13,6 +13,7 @@ use core::mem;
 ///
 /// ```
 /// use std::mem::size_of;
+///
 /// use saturnus_libutils::mem::bit_size_of;
 ///
 /// assert_eq!(size_of::<u32>(), 4);
@@ -34,6 +35,7 @@ pub const fn bit_size_of<T>() -> usize {
 ///
 /// ```
 /// use std::mem::size_of_val;
+///
 /// use saturnus_libutils::mem::bit_size_of_val;
 ///
 /// let x: u32 = 5;
@@ -76,6 +78,35 @@ pub const fn align_down(value: usize, align: usize) -> usize {
 pub const fn is_aligned(value: usize, align: usize) -> bool {
     assert!(align.is_power_of_two());
     value & (align - 1) == 0
+}
+
+/// Returns the value of type `T` represented by the all-zero byte pattern.
+///
+/// # Safety
+///
+/// The Rust compiler assumes that every initialized variable contains a
+/// valid value. Thereby this function will cause immediate undefined behavior
+/// if a sequence of null bytes is not a valid representation of `T`. Examples
+/// being function pointers or reference types.
+///
+/// # Examples
+///
+/// ```
+/// use saturnus_libutils::mem::zeroed;
+///
+/// // SAFETY: A byte pattern of zeroes is valid for every integral type and
+/// // we're guaranteed that array elements reside subsequently in memory.
+/// const NULL_ARRAY: [u32; 5] = unsafe { zeroed() };
+///
+/// assert_eq!(NULL_ARRAY[4], 0);
+/// ```
+#[inline(always)]
+pub const unsafe fn zeroed<T>() -> T
+where
+    [(); mem::size_of::<T>()]: Sized,
+{
+    let zeroed = [0u8; mem::size_of::<T>()];
+    unsafe { mem::transmute_copy(&zeroed) }
 }
 
 #[cfg(test)]

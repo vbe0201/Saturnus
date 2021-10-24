@@ -18,7 +18,7 @@ mod result {
     pub const SMC_NOT_PERMITTED: u64 = 6;
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 struct SecureMonitorArguments {
     x: [u64; 8],
@@ -72,7 +72,7 @@ pub fn generate_random_bytes(buf: &mut [u8]) {
     assert!(buf.len() <= size_of::<SecureMonitorArguments>() - size_of::<u64>());
 
     // Prepare the arguments for a call to `GetRandomBytes`.
-    let mut args = SecureMonitorArguments::default();
+    let mut args = unsafe { libutils::mem::zeroed::<SecureMonitorArguments>() };
     args.x[0] = Function::GenerateRandomBytes as u64;
     args.x[1] = buf.len() as u64;
 
@@ -139,7 +139,7 @@ pub mod init {
         assert!(buf.len() <= size_of::<SecureMonitorArguments>() - size_of::<u64>());
 
         // Prepare the arguments for a call to `GetRandomBytes`.
-        let mut args = SecureMonitorArguments::default();
+        let mut args = unsafe { libutils::mem::zeroed::<SecureMonitorArguments>() };
         args.x[0] = Function::GenerateRandomBytes as u64;
         args.x[1] = buf.len() as u64;
 
