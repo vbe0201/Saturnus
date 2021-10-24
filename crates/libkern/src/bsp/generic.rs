@@ -2,12 +2,16 @@
 
 use core::mem::size_of;
 
+use libutils::crc::crc32;
+
 use crate::sync::SpinLock;
 
 #[path = "generic/rand.rs"]
 mod rand;
 
-static RAND: SpinLock<rand::MtRand> = SpinLock::new(rand::MtRand::new(0x44bf1768));
+static RAND: SpinLock<rand::MtRand> = SpinLock::new(rand::MtRand::new(crc32(include_bytes!(
+    "./generic/seed.png"
+))));
 
 pub mod init {
     // difference between `init` namespace and normal one is only present

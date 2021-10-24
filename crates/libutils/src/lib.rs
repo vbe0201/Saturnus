@@ -8,3 +8,4 @@
 pub mod assert;
 pub mod bits;
 pub mod mem;
+pub mod crc;
