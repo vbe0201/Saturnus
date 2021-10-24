@@ -106,6 +106,7 @@ pub mod init {
     use super::{result, Function, SecureMonitorArguments};
 
     #[allow(unsafe_op_in_unsafe_fn)]
+    #[inline(always)]
     unsafe fn call_privileged_secure_monitor_function(args: &mut SecureMonitorArguments) {
         // Perform the SMC with all registers as inputs where we also store the results.
         asm!(

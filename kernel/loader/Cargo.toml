@@ -20,11 +20,11 @@ static_assertions = "1.1"
 bitflags = "1"
 
 [features]
-default = ["bsp-qemu"]
+default = ["bsp-nintendo-nx"]
 
 # Builds the loader using platform-specific code for running
 # on real Nintendo Switch (codename NX) hardware.
-bsp-nintendo-nx = []
+bsp-nintendo-nx = ["libkern/bsp-nintendo-nx"]
 # Builds the loader using platform-specific code for running
 # under a QEMU semihosting session for debugging.
 bsp-qemu = []

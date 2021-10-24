@@ -12,6 +12,11 @@ edition = "2021"
 [dependencies]
 cortex-a = { package = "saturnus-cortex-a", path = "../cortex-a" }
 libutils = { package = "saturnus-libutils", path = "../libutils" }
+lock_api = { version = "0.4.5", features = ["nightly"] }
 
 static_assertions = "1.0"
 tock-registers = { version = "0.7.x", default-features = false }
+
+[features]
+# Builds the kernel library for the Nintendo Switch (codename NX)
+bsp-nintendo-nx = []
