@@ -1,3 +1,5 @@
+use core::ptr;
+
 use cortex_a::paging::{page, PageAllocator, PhysAddr};
 use libutils::mem;
 
@@ -12,30 +14,32 @@ use crate::system_control;
 // Despite not being strictly required. Thanks, SciresM.
 const UNIT_SIZE: usize = mem::bit_size_of::<u64>() * InitialPageAllocator::PAGE_SIZE;
 
-type FreePageFramePtr = Option<&'static mut FreePageFrame>;
-
-struct FreePageList {
-    head: FreePageFramePtr,
+struct FreeList {
+    head: *mut FreePageFrame,
 }
 
 struct FreePageFrame {
-    next: FreePageFramePtr,
+    next: *mut FreePageFrame,
     size: usize,
 }
 
-impl FreePageList {
-    /// Constructs a new page frame list without any nodes.
+impl FreeList {
+    /// Creates a new list of free page frames in an uninitialized state.
+    #[inline(always)]
     pub const fn new() -> Self {
-        FreePageList { head: None }
+        FreeList {
+            head: ptr::null_mut(),
+        }
     }
 
-    /// Checks if the list contains a free node that is large enough to fit an
-    /// allocation of `size` bytes, aligned to `alignn` bytes.
-    ///
-    /// This must return [`true`] as a precondition for an allocation to succeed.
+    /// Checks if an `align`-aligned allocation of `size` bytes fits into any of the
+    /// free frame nodes known to this list.
     pub fn is_allocatable(&self, align: usize, size: usize) -> bool {
-        let mut current_frame = &self.head;
-        while let Some(frame) = current_frame {
+        let mut current_node = self.head;
+        while current_node != ptr::null_mut() {
+            // SAFETY: Pointer is checked to be non-null.
+            let frame = unsafe { &*current_node };
+
             // Check if the frame is large enough to fit the whole allocation.
             let frame_last_addr = frame.address() + frame.size() - 1;
             let alloc_last_addr = mem::align_up(frame.address(), align) + size - 1;
@@ -43,21 +47,82 @@ impl FreePageList {
                 return true;
             }
 
-            // Advance to the next frame node in the list.
-            current_frame = frame.next();
+            // Current frame is too small, advance to the next node.
+            current_node = frame.next;
         }
 
         false
     }
+
+    /// Attemtps to allocate `size` bytes at a given address in memory.
+    ///
+    /// This returns [`Err`] when the free list has no page frame entry that would
+    /// be large enough to hold the requested allocation.
+    ///
+    /// This method imposes no unsafety because it properly validates that `address`
+    /// is within checked ranges of validated free list elements. As a result, no pointer
+    /// arithmetic will be performed on invalid memory addresses.
+    pub fn try_allocate(&mut self, address: usize, size: usize) -> Result<(), ()> {
+        let mut current_node = self.head;
+        let mut previous_next = &mut current_node as *mut _;
+        while current_node != ptr::null_mut() {
+            // SAFETY: Pointer is checked to be non-null.
+            let mut current = unsafe { &mut *current_node };
+
+            // Extract range information covered by this frame.
+            let current_start_addr = current.address();
+            let current_last_addr = current.address() + current.size() - 1;
+
+            // Check if the range we want to allocate fits inside the frame.
+            if current_start_addr <= address && address + size - 1 <= current_last_addr {
+                // SAFETY: The address is in range, so it can be turned into an allocation.
+                let alloc = unsafe { &mut *(address as *mut FreePageFrame) };
+
+                // Do fragmentation at front.
+                if alloc.address() != current.address() {
+                    previous_next = &mut current.next as *mut _;
+
+                    *alloc = FreePageFrame {
+                        next: current.next,
+                        size: current_start_addr + current.size() - address,
+                    };
+                    *current = FreePageFrame {
+                        next: alloc,
+                        size: address - current_start_addr,
+                    };
+                }
+
+                // Do fragmentation at tail.
+                if alloc.size() != size {
+                    unsafe {
+                        let next = (address + size) as *mut FreePageFrame;
+
+                        *next = FreePageFrame {
+                            next: alloc.next,
+                            size: alloc.size() - size,
+                        };
+                        *alloc = FreePageFrame { next, size };
+                    }
+                }
+
+                // Link the previous node to the next node of our allocation.
+                unsafe {
+                    *previous_next = alloc.next;
+                }
+
+                return Ok(());
+            }
+
+            // Advance to the next node in the list.
+            previous_next = &mut current.next as *mut _;
+            current_node = current.next;
+        }
+
+        Err(())
+    }
 }
 
 impl FreePageFrame {
-    /// Gets a reference to the next element pointer linked to this frame node.
-    #[inline]
-    pub fn next(&self) -> &FreePageFramePtr {
-        &self.next
-    }
-
     /// Gets the size of this page frame.
     #[inline]
     pub fn size(&self) -> usize {
@@ -84,7 +149,7 @@ impl FreePageFrame {
 pub struct InitialPageAllocator {
     start_address: PhysAddr,
     next_free_address: PhysAddr,
-    page_list: FreePageList,
+    free_list: FreeList,
 }
 
 impl InitialPageAllocator {
@@ -99,7 +164,7 @@ impl InitialPageAllocator {
         Self {
             start_address: PhysAddr::zero(),
             next_free_address: PhysAddr::zero(),
-            page_list: FreePageList::new(),
+            free_list: FreeList::new(),
         }
     }
 
@@ -118,15 +183,11 @@ impl InitialPageAllocator {
         self.next_free_address = PhysAddr::new(base);
     }
 
-    fn try_allocate(&mut self, address: usize, size: usize) -> Result<(), ()> {
-        todo!()
-    }
-
     /// Attempts to allocate pages of `SIZE` bytes in total with a customized
     /// address alignment of `ALIGN`.
     pub fn allocate_aligned(&mut self, size: usize, align: usize) -> PhysAddr {
         // Ensure that there are list nodes left for us.
-        while !self.page_list.is_allocatable(align, size) {
+        while !self.free_list.is_allocatable(align, size) {
             unsafe {
                 self.free(self.next_free_address, UNIT_SIZE);
                 self.next_free_address += UNIT_SIZE;
@@ -140,7 +201,7 @@ impl InitialPageAllocator {
         loop {
             let random_address =
                 aligned_start + system_control::init::generate_random_range(0, max_range) * align;
-            if self.try_allocate(random_address, size).is_ok() {
+            if self.free_list.try_allocate(random_address, size).is_ok() {
                 return unsafe { PhysAddr::new_unchecked(random_address) };
             }
         }
