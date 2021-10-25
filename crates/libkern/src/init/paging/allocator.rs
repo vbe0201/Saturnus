@@ -39,7 +39,6 @@ impl FreeList {
     pub fn is_allocatable(&self, align: usize, size: usize) -> bool {
         let mut current_node = self.head;
         while current_node != ptr::null_mut() {
-            // SAFETY: Pointer is checked to be non-null.
             let frame = unsafe { &*current_node };
 
             // Check if the frame is large enough to fit the whole allocation.
@@ -228,31 +227,14 @@ impl InitialPageAllocator {
     /// The page size assumed by this allocator.
     pub const PAGE_SIZE: usize = page::_4K;
 
-    /// Creates a new allocator in its default state.
-    ///
-    /// The resulting object needs to be initialized through a corresponding
-    /// method before it can be used.
-    pub const fn new() -> Self {
+    /// Creates a new allocator in its default state and binds its allocations to
+    /// the memory region starting from `base`.
+    pub const fn new(base: PhysAddr) -> Self {
         Self {
-            start_address: PhysAddr::zero(),
-            next_free_address: PhysAddr::zero(),
+            start_address: base,
+            next_free_address: base,
             free_list: FreeList::new(),
         }
-    }
-
-    /// Initializes the page allocator to a given physical base address in
-    /// memory where allocations can be placed.
-    ///
-    /// # Safety
-    ///
-    /// This function may make the allocator cause memory corruption when `base`
-    /// points to a place that is simultaneously used for something else.
-    ///
-    /// Further, `base` must be page-aligned.
-    #[inline(always)]
-    pub const unsafe fn initialize(&mut self, base: usize) {
-        self.start_address = PhysAddr::new(base);
-        self.next_free_address = PhysAddr::new(base);
     }
 
     /// Attempts to allocate pages of `SIZE` bytes in total with a customized
