@@ -14,10 +14,12 @@ use crate::system_control;
 // Despite not being strictly required. Thanks, SciresM.
 const UNIT_SIZE: usize = mem::bit_size_of::<u64>() * InitialPageAllocator::PAGE_SIZE;
 
+#[repr(C)]
 struct FreeList {
     head: *mut FreePageFrame,
 }
 
+#[repr(C)]
 struct FreePageFrame {
     next: *mut FreePageFrame,
     size: usize,
@@ -117,6 +119,79 @@ impl FreeList {
 
         Err(())
     }
+
+    /// Attempts to free a previous allocation of `size` bytes at a given address.
+    ///
+    /// # Safety
+    ///
+    /// This function is wildly unsafe because it assumes that any supplied `address`
+    /// is in the range of this free list and belongs to a valid allocation.
+    ///
+    /// Failure to supply an address-size-pair that has successfully been allocated with
+    /// [`FreeList::try_allocate`] previously will lead to memory corruption.
+    #[allow(unsafe_op_in_unsafe_fn)]
+    pub unsafe fn free(&mut self, address: PhysAddr, size: usize) {
+        let mut current_node = self.head;
+        let mut previous_next = &mut current_node as *mut _;
+
+        let chunk = address.as_mut_ptr::<FreePageFrame>();
+        if current_node != ptr::null_mut() {
+            let current = &mut *current_node;
+
+            let chunk_start = address.as_usize();
+            let chunk_end = chunk_start + size;
+            loop {
+                let current_start = current.address();
+                let current_end = current_start + current.size();
+
+                // Attemt to coalesce the chunk with existing nodes where applicable.
+                if chunk_start <= chunk_end {
+                    // Do fragmentation at front.
+                    if chunk_end < current_start {
+                        *chunk = FreePageFrame {
+                            next: current_node,
+                            size,
+                        };
+                        break;
+                    } else if chunk_end == current_start {
+                        // Do fragmentation at tail.
+                        *chunk = FreePageFrame {
+                            next: current.next,
+                            size: current.size() + size,
+                        };
+                        break;
+                    }
+                } else if current_end == chunk_start {
+                    current.size += size;
+                    return;
+                }
+
+                // Advance to the next node in the list.
+                previous_next = &mut current.next as *mut _;
+                current_node = current.next;
+
+                // If this is the last node of the list, set the chunk to free as tail.
+                if current.next != ptr::null_mut() {
+                    *chunk = FreePageFrame {
+                        next: ptr::null_mut(),
+                        size,
+                    };
+                    current.next = chunk;
+
+                    return;
+                }
+            }
+        } else {
+            // The list is entirely empty, make the chunk to free the new head.
+            *chunk = FreePageFrame {
+                next: ptr::null_mut(),
+                size,
+            };
+        }
+
+        // Link the previous node to the chunk we free'd.
+        *previous_next = chunk;
+    }
 }
 
 impl FreePageFrame {
@@ -211,7 +286,8 @@ unsafe impl PageAllocator for InitialPageAllocator {
         Some(self.allocate_aligned(size, size))
     }
 
+    #[inline]
     unsafe fn free(&mut self, addr: PhysAddr, size: usize) {
-        todo!()
+        unsafe { self.free_list.free(addr, size) }
     }
 }
