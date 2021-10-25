@@ -45,7 +45,7 @@ impl VirtAddr {
     pub const fn new(addr: usize) -> Self {
         match Self::try_new(addr) {
             Ok(addr) => addr,
-            Err(_) => panic!("VirtAddr::new: address is malformed")
+            Err(_) => panic!("VirtAddr::new: address is malformed"),
         }
     }
 
@@ -157,7 +157,7 @@ impl PhysAddr {
     pub const fn new(addr: usize) -> Self {
         match Self::try_new(addr) {
             Ok(addr) => addr,
-            Err(_) => panic!("PhysAddr::new: address is malformed")
+            Err(_) => panic!("PhysAddr::new: address is malformed"),
         }
     }
 

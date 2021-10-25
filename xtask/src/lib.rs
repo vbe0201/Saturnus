@@ -4,9 +4,10 @@ pub mod package;
 pub mod runner;
 pub mod rustc;
 
+use std::path::PathBuf;
+
 use anyhow::Result;
 use package::Package;
-use std::path::PathBuf;
 use xshell::cmd;
 
 /// Build the Saturnus kernel and return the path to the ELF file which was produced by cargo.

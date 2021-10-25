@@ -66,8 +66,7 @@ impl FreeList {
         let mut current_node = self.head;
         let mut previous_next = &mut current_node as *mut _;
         while current_node != ptr::null_mut() {
-            // SAFETY: Pointer is checked to be non-null.
-            let mut current = unsafe { &mut *current_node };
+            let current = unsafe { &mut *current_node };
 
             // Extract range information covered by this frame.
             let current_start_addr = current.address();
@@ -75,7 +74,7 @@ impl FreeList {
 
             // Check if the range we want to allocate fits inside the frame.
             if current_start_addr <= address && address + size - 1 <= current_last_addr {
-                // SAFETY: The address is in range, so it can be turned into an allocation.
+                // The address is in range, so turn it into an allocation.
                 let alloc = unsafe { &mut *(address as *mut FreePageFrame) };
 
                 // Do fragmentation at front.
@@ -106,9 +105,7 @@ impl FreeList {
                 }
 
                 // Link the previous node to the next node of our allocation.
-                unsafe {
-                    *previous_next = alloc.next;
-                }
+                unsafe { *previous_next = alloc.next }
 
                 return Ok(());
             }

@@ -1,5 +1,6 @@
-use anyhow::Result;
 use std::path::PathBuf;
+
+use anyhow::Result;
 use xshell::cmd;
 
 /// Run the given binary using `qemu-system-aarch64`

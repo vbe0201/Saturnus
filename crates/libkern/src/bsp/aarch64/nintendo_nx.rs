@@ -1,6 +1,4 @@
 #[path = "nintendo_nx/smc.rs"]
 mod smc;
 
-pub use smc::generate_random_bytes;
-
-pub use smc::init;
+pub use smc::{generate_random_bytes, init};

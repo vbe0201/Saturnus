@@ -4,6 +4,7 @@
 //! more abstractions and not just a single `tock-registers` interface.
 
 use core::cell::Cell;
+
 use tock_registers::{
     interfaces::{Readable, Writeable},
     register_bitfields,

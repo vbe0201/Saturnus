@@ -23,7 +23,7 @@ pub trait False: sealed::Sealed {}
 ///
 /// fn non_null<const N: usize>()
 /// where
-///     Assert::<{ N == 0 }>: False,
+///     Assert<{ N == 0 }>: False,
 /// {
 ///     // ...
 /// }

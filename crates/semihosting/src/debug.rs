@@ -8,7 +8,7 @@
 //! Target program:
 //!
 //! ```no_run
-//! use saturnus_semihosting::debug::{self, EXIT_SUCCESS, EXIT_FAILURE};
+//! use saturnus_semihosting::debug::{self, EXIT_FAILURE, EXIT_SUCCESS};
 //!
 //! if 2 == 2 {
 //!     // Report success.

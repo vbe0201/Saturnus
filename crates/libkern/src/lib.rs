@@ -15,6 +15,6 @@ pub mod init;
 pub mod irq;
 //pub mod scoped_lock;
 //pub mod spin;
-pub mod system_control;
 pub mod bsp;
 pub mod sync;
+pub mod system_control;

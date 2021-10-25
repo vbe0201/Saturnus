@@ -1,5 +1,6 @@
-use anyhow::Result;
 use std::path::PathBuf;
+
+use anyhow::Result;
 use xshell::cmd;
 
 /// Returns the path to the root of this cargo workspace.
