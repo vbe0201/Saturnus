@@ -2,7 +2,7 @@
 name = "tegra210"
 version = "0.1.0"
 authors = ["Valentin B. <valentin.be@protonmail.com>", "Justus K <justus.k@protonmail.com>"]
-description = "Low-level hardware access library for the Tegra X1 T210 SOC."
+description = "Low-level hardware access library to Tegra X1 SoCs."
 license = "Apache-2.0 OR MIT"
 repository = "https://github.com/vbe0201/Saturnus"
 keywords = ["arm", "cortex-a"]
@@ -10,3 +10,5 @@ categories = ["no-std", "embedded"]
 edition = "2021"
 
 [dependencies]
+static_assertions = "1.1"
+tock-registers = "0.7"

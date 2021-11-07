@@ -79,6 +79,7 @@ dependencies = [
  "saturnus-libkern",
  "saturnus-semihosting",
  "static_assertions",
+ "tegra210",
  "tock-registers",
 ]
 
@@ -204,6 +205,10 @@ dependencies = [
 [[package]]
 name = "tegra210"
 version = "0.1.0"
+dependencies = [
+ "static_assertions",
+ "tock-registers",
+]
 
 [[package]]
 name = "tock-registers"
