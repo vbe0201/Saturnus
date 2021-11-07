@@ -1,7 +1,6 @@
 //! Abstractions over the Memory Controller registers of the Tegra X1.
 //!
-//! See Chapter 18.11 in the Tegra X1 Technical Reference Manual
-//! for details.
+//! See Chapter 18.11 in the Tegra X1 Technical Reference Manual for details.
 
 use tock_registers::{register_structs, registers::*};
 

@@ -24,3 +24,4 @@
 extern crate static_assertions;
 
 pub mod mc;
+pub mod uart;
