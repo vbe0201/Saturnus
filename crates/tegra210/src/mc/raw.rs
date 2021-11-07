@@ -4,6 +4,8 @@
 
 use tock_registers::{register_structs, registers::*};
 
+// TODO: Bitfields.
+
 register_structs! {
     /// Representation of the Memory Controller registers.
     #[allow(non_snake_case)]
