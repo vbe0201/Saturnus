@@ -1,5 +1,5 @@
 mod allocator;
 pub use self::allocator::InitialPageAllocator;
 
-///
-pub struct InitialPageTable;
+mod table;
+pub use self::table::InitialPageTable;

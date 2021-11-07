@@ -38,7 +38,7 @@ impl FreeList {
     /// free frame nodes known to this list.
     pub fn is_allocatable(&self, align: usize, size: usize) -> bool {
         let mut current_node = self.head;
-        while current_node != ptr::null_mut() {
+        while !current_node.is_null() {
             let frame = unsafe { &*current_node };
 
             // Check if the frame is large enough to fit the whole allocation.
@@ -66,7 +66,7 @@ impl FreeList {
     pub fn try_allocate(&mut self, address: usize, size: usize) -> Result<(), ()> {
         let mut current_node = self.head;
         let mut previous_next = &mut current_node as *mut _;
-        while current_node != ptr::null_mut() {
+        while !current_node.is_null() {
             let current = unsafe { &mut *current_node };
 
             // Extract range information covered by this frame.
@@ -134,7 +134,7 @@ impl FreeList {
         let mut previous_next = &mut current_node as *mut _;
 
         let chunk = address.as_mut_ptr::<FreePageFrame>();
-        if current_node != ptr::null_mut() {
+        if !current_node.is_null() {
             let current = &mut *current_node;
 
             let chunk_start = address.as_usize();
@@ -170,7 +170,7 @@ impl FreeList {
                 current_node = current.next;
 
                 // If this is the last node of the list, set the chunk to free as tail.
-                if current.next != ptr::null_mut() {
+                if !current.next.is_null() {
                     *chunk = FreePageFrame {
                         next: ptr::null_mut(),
                         size,
