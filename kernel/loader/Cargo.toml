@@ -11,6 +11,7 @@ edition = "2021"
 cortex-a = { package = "saturnus-cortex-a", path = "../../crates/cortex-a" }
 libkern = { package = "saturnus-libkern", path = "../../crates/libkern" }
 semihosting = { package = "saturnus-semihosting", path = "../../crates/semihosting" }
+smc = { package = "saturnus-smc", path = "../../crates/smc" }
 tegra210 = { path = "../../crates/tegra210" }
 
 goblin = { version = "0.4", default-features = false, features = ["elf64"] }

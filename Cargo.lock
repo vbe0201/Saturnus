@@ -78,6 +78,7 @@ dependencies = [
  "saturnus-cortex-a",
  "saturnus-libkern",
  "saturnus-semihosting",
+ "saturnus-smc",
  "static_assertions",
  "tegra210",
  "tock-registers",
@@ -157,6 +158,10 @@ version = "0.1.0"
 dependencies = [
  "saturnus-libkern",
 ]
+
+[[package]]
+name = "saturnus-smc"
+version = "0.1.0"
 
 [[package]]
 name = "scopeguard"
