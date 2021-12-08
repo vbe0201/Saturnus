@@ -21,6 +21,7 @@ struct Arguments {
 enum Action {
     Run(RunConfig),
     Build(BuildConfig),
+    Check(CheckConfig),
     Lint(LintConfig),
     Llvm(LlvmConfig),
 }
@@ -41,6 +42,18 @@ struct RunConfig {
 #[argh(subcommand, name = "build")]
 /// build the provided package
 struct BuildConfig {
+    /// build the package in release mode (optimizations enabled)
+    #[argh(switch)]
+    release: bool,
+    /// specifies for which board to build the package (e.g. QEMU, Switch, etc)
+    #[argh(option)]
+    bsp: Option<String>,
+}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "check")]
+/// check the provided package
+struct CheckConfig {
     /// build the package in release mode (optimizations enabled)
     #[argh(switch)]
     release: bool,
@@ -104,6 +117,9 @@ fn execute_action(args: &Arguments, pkg: Package) -> anyhow::Result<()> {
         Action::Build(ref cfg) => {
             let elf = xtask::build_package(cfg.release, cfg.bsp.as_deref(), pkg)?;
             xtask::extract_binary(elf)?;
+        }
+        Action::Check(ref cfg) => {
+            xtask::check(cfg.release, cfg.bsp.as_deref(), pkg)?;
         }
         Action::Run(ref cfg) => {
             let elf = xtask::build_package(cfg.release, cfg.bsp.as_deref(), pkg)?;

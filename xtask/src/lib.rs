@@ -10,6 +10,38 @@ use anyhow::Result;
 use package::Package;
 use xshell::cmd;
 
+/// Check Saturnus for a passing build.
+pub fn check(release: bool, bsp: Option<&str>, pkg: Package) -> Result<()> {
+    let _cwd = xshell::pushd(rustc::root_dir());
+
+    // build the kernel using cargo
+    let release_arg = if release { &["--release"][..] } else { &[] };
+    let Package {
+        cargo_name, target, ..
+    } = pkg;
+
+    let features = match bsp {
+        Some(bsp) => vec![
+            "--no-default-features".to_owned(),
+            "--features".to_owned(),
+            format!("bsp-{}", bsp),
+        ],
+        None => vec![],
+    };
+
+    cmd!(
+        "cargo check
+            {release_arg...}
+            -p {cargo_name}
+            --target {target}
+            {features...}
+            -Zbuild-std=core,alloc,compiler_builtins"
+    )
+    .run()?;
+
+    Ok(())
+}
+
 /// Build the Saturnus kernel and return the path to the ELF file which was produced by cargo.
 pub fn build_package(release: bool, bsp: Option<&str>, pkg: Package) -> Result<PathBuf> {
     let _cwd = xshell::pushd(rustc::root_dir());
