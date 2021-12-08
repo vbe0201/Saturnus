@@ -10,3 +10,4 @@ categories = ["no-std", "embedded"]
 edition = "2021"
 
 [dependencies]
+smc-codegen = { package = "saturnus-smc-codegen", path = "codegen" }

@@ -162,6 +162,18 @@ dependencies = [
 [[package]]
 name = "saturnus-smc"
 version = "0.1.0"
+dependencies = [
+ "saturnus-smc-codegen",
+]
+
+[[package]]
+name = "saturnus-smc-codegen"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "scopeguard"

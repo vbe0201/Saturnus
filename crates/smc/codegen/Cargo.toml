@@ -1,0 +1,18 @@
+[package]
+name = "saturnus-smc-codegen"
+version = "0.1.0"
+authors = ["Valentin B. <valentin.be@protonmail.com>"]
+description = "Rust code generation for SMC calls"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/vbe0201/Saturnus"
+keywords = ["saturnus", "smc", "codegen", "arm"]
+categories = ["embedded"]
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0"
+syn = "1.0"
+quote = "1.0"
