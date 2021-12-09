@@ -103,8 +103,8 @@ impl SecureMonitorContext {
 
     /// Gets the result code of an SMC *after* it has completed.
     #[inline]
-    pub fn result(&self) -> u64 {
-        self.x[0]
+    pub fn result(&self) -> u32 {
+        self.x[0] as u32
     }
 }
 
