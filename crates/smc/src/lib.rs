@@ -12,6 +12,11 @@ pub mod ctx;
 pub mod result;
 pub mod service;
 
+/// ID for [`smc`]s triggered from user level.
+pub const USER_ID: usize = 0;
+/// ID for [`smc`]s triggered from supervisor level.
+pub const SUPERVISOR_ID: usize = 1;
+
 /// Triggers a Secure Monitor Call with an ID denoted by `ID`.
 ///
 /// The state provided by `ctx` will be loaded as input and overwritten
