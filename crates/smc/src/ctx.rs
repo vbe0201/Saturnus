@@ -19,7 +19,7 @@ use crate::call::FunctionId;
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct SecureMonitorContext {
-    x: [u64; 8],
+    pub(crate) x: [u64; 8],
 }
 
 impl SecureMonitorContext {
