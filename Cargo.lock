@@ -163,7 +163,9 @@ dependencies = [
 name = "saturnus-smc"
 version = "0.1.0"
 dependencies = [
+ "saturnus-libutils",
  "saturnus-smc-codegen",
+ "static_assertions",
 ]
 
 [[package]]

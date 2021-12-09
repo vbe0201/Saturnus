@@ -1,7 +1,7 @@
 //! Definitions of the calling conventions for functions.
 
 /// The numeric type that is used to encode SMC *Function Identifiers*.
-pub type FunctionIdentifier = u32;
+pub type FunctionId = u32;
 
 // Service Call ranges.
 #[inline(always)]
@@ -17,6 +17,13 @@ const fn service_mask(entity: u8) -> u32 {
 ///
 /// * The function to call - `function` argument.
 ///
+/// * A bitmask where every bit defines whether the corresponding input
+///   register represents a pointer whose address must be translated -
+///   `pointer_mask` argument.
+///
+///   * This is a custom extension by Nintendo and not part of the
+///     SMC standard defined by ARM.
+///
 /// * The service to call - `service` argument.
 ///
 /// * 64-bit or 32-bit calling convention - `smc64` argument.
@@ -29,14 +36,16 @@ const fn service_mask(entity: u8) -> u32 {
 /// its entity number is not in the range from 0 (inclusive) to 64
 /// (exclusive).
 #[inline(always)]
-pub const fn make_function_identifier(
-    function: u16,
+pub const fn make_function_id(
+    function: u8,
+    pointer_mask: u8,
     service: u8,
     smc64: bool,
     fast: bool,
-) -> FunctionIdentifier {
-    (function as FunctionIdentifier)
+) -> FunctionId {
+    (function as FunctionId)
+        | (pointer_mask as FunctionId) << 8
         | service_mask(service)
-        | (smc64 as FunctionIdentifier) << 30
-        | (fast as FunctionIdentifier) << 31
+        | (smc64 as FunctionId) << 30
+        | (fast as FunctionId) << 31
 }

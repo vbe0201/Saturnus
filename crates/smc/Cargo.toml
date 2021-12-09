@@ -10,4 +10,7 @@ categories = ["no-std", "embedded"]
 edition = "2021"
 
 [dependencies]
+libutils = { package = "saturnus-libutils", path = "../libutils"}
 smc-codegen = { package = "saturnus-smc-codegen", path = "codegen" }
+
+static_assertions = "1.0"
