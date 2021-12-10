@@ -15,7 +15,13 @@ pub fn nop() {
 
 /// Wait For Interrupt
 ///
-/// For more details on wfi, refer to [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802a/CIHEGBBF.html).
+/// For more details on wfi, refer to [here].
+///
+/// [here]: http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802a/CIHEGBBF.html
+///
+/// # Safety
+///
+/// This is hardware land. Use at your own discretion.
 #[inline(always)]
 pub unsafe fn wfi() {
     match () {
@@ -28,7 +34,13 @@ pub unsafe fn wfi() {
 
 /// Wait For Event
 ///
-/// For more details of wfe - sev pair, refer to [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802a/CIHEGBBF.html).
+/// For more details of wfe - sev pair, refer to [here].
+///
+/// [here]: http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802a/CIHEGBBF.html
+///
+/// # Safety
+///
+/// This is hardware land. Use at your own discretion.
 #[inline(always)]
 pub unsafe fn wfe() {
     match () {
@@ -43,7 +55,9 @@ pub unsafe fn wfe() {
 ///
 /// SEV causes an event to be signaled to the local core within a multiprocessor system.
 ///
-/// For more details of wfe - sev/sevl pair, refer to [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802a/CIHEGBBF.html).
+/// For more details of wfe - sev/sevl pair, refer to [here].
+///
+/// [here]: http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802a/CIHEGBBF.html
 #[inline(always)]
 pub fn sevl() {
     match () {
@@ -58,7 +72,9 @@ pub fn sevl() {
 ///
 /// SEV causes an event to be signaled to all cores within a multiprocessor system.
 ///
-/// For more details of wfe - sev pair, refer to [here](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802a/CIHEGBBF.html).
+/// For more details of wfe - sev pair, refer to [here].
+///
+/// [here]: http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0802a/CIHEGBBF.html
 #[inline(always)]
 pub fn sev() {
     match () {
