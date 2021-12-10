@@ -42,7 +42,6 @@ pub unsafe fn smc<const ID: usize>(ctx: &mut ctx::SecureMonitorContext) {
             inlateout("x5") ctx.x[5],
             inlateout("x6") ctx.x[6],
             inlateout("x7") ctx.x[7],
-            options(nostack),
         )
     }
 }
