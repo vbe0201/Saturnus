@@ -164,17 +164,7 @@ name = "saturnus-smc"
 version = "0.1.0"
 dependencies = [
  "saturnus-libutils",
- "saturnus-smc-codegen",
  "static_assertions",
-]
-
-[[package]]
-name = "saturnus-smc-codegen"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
