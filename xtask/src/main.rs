@@ -2,20 +2,24 @@ use anyhow::anyhow;
 use argh::FromArgs;
 use xtask::package::Package;
 
-/// 'xtask' is the build system used for builidng Saturnus and it's components.
+/// Arguments to `xtask`, the build system of the Saturnus project.
 #[derive(FromArgs, PartialEq, Debug)]
 struct Arguments {
-    /// which package should be targetted by the action. only required for some actions
+    /// which package should be targeted by the action. only require
+    /// for some actions
     #[argh(option, short = 'p')]
     package: Option<String>,
-    /// run the action for every package
+
+    /// run the action for every package, not only one
     #[argh(switch)]
     all: bool,
+
     #[argh(subcommand)]
     /// the action which should be performed
     cmd: Action,
 }
 
+/// Concrete actions to be performed by the build system.
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand)]
 enum Action {
@@ -26,63 +30,69 @@ enum Action {
     Llvm(LlvmConfig),
 }
 
+/// build and run the provided package
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "run")]
-/// build and run the provided package
 struct RunConfig {
     /// build the package in release mode (optimizations enabled)
     #[argh(switch)]
     release: bool,
+
     /// specifies for which board to build the package (e.g. QEMU, Switch, etc)
     #[argh(option)]
     bsp: Option<String>,
 }
 
+/// build the provided package
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "build")]
-/// build the provided package
 struct BuildConfig {
     /// build the package in release mode (optimizations enabled)
     #[argh(switch)]
     release: bool,
+
     /// specifies for which board to build the package (e.g. QEMU, Switch, etc)
     #[argh(option)]
     bsp: Option<String>,
 }
 
+/// check the provided package
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "check")]
-/// check the provided package
 struct CheckConfig {
     /// build the package in release mode (optimizations enabled)
     #[argh(switch)]
     release: bool,
+
     /// specifies for which board to build the package (e.g. QEMU, Switch, etc)
     #[argh(option)]
     bsp: Option<String>,
 }
 
+/// subcommand for invoking llvm bintools on the given package
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "llvm")]
-/// subcommand for invoking llvm bintools on the given package
 struct LlvmConfig {
     /// build the package in release mode (optimizations enabled)
     #[argh(switch)]
     release: bool,
+
     /// specifies for which board to build the package (e.g. QEMU, Switch, etc)
     #[argh(option)]
     bsp: Option<String>,
+
     /// which tool should be invoked
     #[argh(positional)]
     tool: String,
+
     /// the arguments which will be given to the llvm tool
     #[argh(positional)]
     rest: Vec<String>,
 }
 
+/// run clippy and rustfmt on the package
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "lint")]
-/// run clippy and rustfmt on the package
 struct LintConfig {
     /// pass `--check` argument to rustfmt
     #[argh(switch)]
@@ -115,22 +125,22 @@ fn main() -> anyhow::Result<()> {
 fn execute_action(args: &Arguments, pkg: Package) -> anyhow::Result<()> {
     match args.cmd {
         Action::Build(ref cfg) => {
-            let elf = xtask::build_package(cfg.release, cfg.bsp.as_deref(), pkg)?;
-            xtask::extract_binary(elf)?;
+            let elf = xtask::build::build(pkg, cfg.bsp.as_deref(), cfg.release)?;
+            xtask::build::generate_raw_binary(elf)?;
         }
         Action::Check(ref cfg) => {
-            xtask::check(cfg.release, cfg.bsp.as_deref(), pkg)?;
+            xtask::check::check(pkg, cfg.bsp.as_deref(), cfg.release)?;
         }
         Action::Run(ref cfg) => {
-            let elf = xtask::build_package(cfg.release, cfg.bsp.as_deref(), pkg)?;
-            let path = xtask::extract_binary(elf)?;
-            xtask::runner::run_qemu_aarch64(path)?;
+            let elf = xtask::build::build(pkg, cfg.bsp.as_deref(), cfg.release)?;
+            let raw = xtask::build::generate_raw_binary(elf)?;
+            xtask::run::run(raw)?;
         }
         Action::Llvm(ref cfg) => {
-            xtask::run_llvm_tool(cfg.release, cfg.bsp.as_deref(), pkg, &cfg.tool, &cfg.rest)?;
+            xtask::llvm::llvm(pkg, cfg.bsp.as_deref(), cfg.release, &cfg.tool, &cfg.rest)?;
         }
         Action::Lint(ref cfg) => {
-            xtask::lint(cfg.check, pkg)?;
+            xtask::lint::lint(pkg, cfg.check)?;
         }
     }
 

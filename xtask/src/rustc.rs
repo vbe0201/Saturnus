@@ -19,12 +19,12 @@ pub fn sysroot() -> Result<String> {
 
 /// Get the path to the llvm tool with the given name, that is shipped with rust.
 pub fn llvm_tool(tool: &str) -> Result<PathBuf> {
-    let sysroot = sysroot()?;
-    let mut pathbuf = PathBuf::from(sysroot);
+    let mut pathbuf = PathBuf::from(sysroot()?);
     pathbuf.push("lib");
     pathbuf.push("rustlib");
     pathbuf.push(rustc_version::version_meta()?.host);
     pathbuf.push("bin");
     pathbuf.push(format!("llvm-{}", tool));
+
     Ok(pathbuf)
 }
