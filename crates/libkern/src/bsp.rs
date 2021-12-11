@@ -33,7 +33,7 @@ pub mod init {
     ///
     /// Panics when `buf` exceeds a length of `0x38` bytes in total, which is
     /// a conceptual limit for how many random bytes can be generated.
-    pub fn generate_random_bytes(buf: &mut [u8]) {
+    pub unsafe fn generate_random_bytes(buf: &mut [u8]) {
         bsp::init::generate_random_bytes(buf);
     }
 }

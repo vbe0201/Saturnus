@@ -10,7 +10,7 @@ pub mod init {
     /// Generates a random range between a minimal and a maximal bound.
     ///
     /// This method does not use a cryptographically secure number generator!
-    pub fn generate_random_range(min: usize, max: usize) -> usize {
+    pub unsafe fn generate_random_range(min: usize, max: usize) -> usize {
         let mut bytes = [0; mem::size_of::<usize>()];
         bsp::init::generate_random_bytes(&mut bytes);
 

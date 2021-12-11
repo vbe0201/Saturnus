@@ -253,8 +253,8 @@ impl InitialPageAllocator {
         let aligned_end = mem::align_down(self.next_free_address.as_usize(), align);
         let max_range = ((aligned_end - aligned_start) / align) - 1;
         loop {
-            let random_address =
-                aligned_start + system_control::init::generate_random_range(0, max_range) * align;
+            let random_address = aligned_start
+                + unsafe { system_control::init::generate_random_range(0, max_range) * align };
             if self.free_list.try_allocate(random_address, size).is_ok() {
                 return unsafe { PhysAddr::new_unchecked(random_address) };
             }

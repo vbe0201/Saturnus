@@ -143,6 +143,7 @@ dependencies = [
  "lock_api",
  "saturnus-cortex-a",
  "saturnus-libutils",
+ "saturnus-smc",
  "spin",
  "static_assertions",
  "tock-registers",

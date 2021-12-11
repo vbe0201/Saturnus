@@ -8,7 +8,7 @@
 
 #![no_std]
 #![allow(unreachable_patterns)]
-#![deny(unsafe_op_in_unsafe_fn, rustdoc::broken_intra_doc_links)]
+#![deny(rustdoc::broken_intra_doc_links)]
 #![feature(asm, const_fn_trait_bound, const_mut_refs)]
 
 pub mod init;
