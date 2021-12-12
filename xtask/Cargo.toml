@@ -6,5 +6,6 @@ edition = "2021"
 [dependencies]
 anyhow = "1"
 argh = "0.1"
+cargo_metadata = "0.14"
 rustc_version = "0.4"
 xshell = "0.1"

@@ -1,8 +1,9 @@
 //! Implementation of the `build` action in the build system.
 
-use std::path::PathBuf;
+use std::{io::BufReader, path::PathBuf};
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use cargo_metadata::Message;
 use xshell::cmd;
 
 use crate::{package::Package, rustc};
@@ -39,7 +40,7 @@ pub fn build(pkg: Package, bsp: Option<&str>, release: bool) -> Result<PathBuf> 
         None => vec![],
     };
 
-    cmd!(
+    let build_out = cmd!(
         "cargo build
             {release_arg...}
             -p {cargo_name}
@@ -48,13 +49,22 @@ pub fn build(pkg: Package, bsp: Option<&str>, release: bool) -> Result<PathBuf> 
             -Zbuild-std=core,alloc,compiler_builtins
             --message-format=json-render-diagnostics"
     )
-    .run()?;
+    .echo_cmd(false)
+    .output()?;
 
-    // FIXME: Use proper way to get the target directory (parse cargo output using cargo_metadata)
-    let target_dir = match release {
-        true => "target/aarch64-saturnus-none/release",
-        false => "target/aarch64-saturnus-none/debug",
-    };
+    // Parse the build output to find the generated executable path.
+    let mut target = None;
+    for message in Message::parse_stream(BufReader::new(&build_out.stdout[..])) {
+        match message.unwrap() {
+            Message::CompilerArtifact(artifact) if artifact.executable.is_some() => {
+                target = artifact.executable;
+                break;
+            }
+            _ => continue,
+        }
+    }
 
-    Ok(PathBuf::from(format!("{}/{}", target_dir, cargo_name)))
+    Ok(PathBuf::from(target.ok_or_else(|| {
+        anyhow!("no executable binary produced by this build")
+    })?))
 }
