@@ -1,5 +1,3 @@
-use core::fmt;
-
 use cortex_a::paging::{PhysAddr, VirtAddr};
 use tock_registers::{interfaces::Readable, register_bitfields, registers::InMemoryRegister};
 

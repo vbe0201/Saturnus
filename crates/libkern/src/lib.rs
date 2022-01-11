@@ -9,12 +9,16 @@
 #![no_std]
 #![allow(unreachable_patterns)]
 #![deny(rustdoc::broken_intra_doc_links)]
-#![feature(asm, const_fn_trait_bound, const_mut_refs)]
+#![feature(
+    asm,
+    const_fn_trait_bound,
+    const_mut_refs,
+    option_result_unwrap_unchecked
+)]
 
+pub mod bsp;
+pub mod critical_section;
 pub mod init;
 pub mod irq;
-//pub mod scoped_lock;
-//pub mod spin;
-pub mod bsp;
-pub mod sync;
+pub mod spin;
 pub mod system_control;

@@ -75,6 +75,7 @@ impl UnalignedSpinLock {
 unsafe impl Sync for UnalignedSpinLock {}
 unsafe impl Send for UnalignedSpinLock {}
 
+// SAFETY: `UnalignedSpinLock` implementation is exclusive.
 unsafe impl lock_api::RawMutex for UnalignedSpinLock {
     const INIT: UnalignedSpinLock = Self::new();
 
@@ -87,7 +88,7 @@ unsafe impl lock_api::RawMutex for UnalignedSpinLock {
 
     #[inline(always)]
     fn try_lock(&self) -> bool {
-        todo!()
+        unimplemented!("the kernel strictly avoids `try_lock`-based logic")
     }
 
     #[inline(always)]

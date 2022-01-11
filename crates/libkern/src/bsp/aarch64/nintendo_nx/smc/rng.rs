@@ -5,7 +5,7 @@ use core::{mem::size_of, ptr};
 use saturnus_smc::{call::*, ctx::SecureMonitorContext, result, service};
 
 use super::call_privileged_secure_monitor_function;
-use crate::{irq::ScopedInterruptDisable, sync::SpinLock};
+use crate::spin::CriticalSection;
 
 /// The SMC *Function Identifier* for `GenerateRandomBytes`.
 ///
@@ -16,6 +16,8 @@ use crate::{irq::ScopedInterruptDisable, sync::SpinLock};
 /// must not exceed `size_of::<u64>() * 7`.
 pub const GENERATE_RANDOM_BYTES: FunctionId =
     make_function_id(5, 0, service::OEM_SERVICE, true, true);
+
+static CRITICAL_SECTION: CriticalSection = CriticalSection::new();
 
 /// Defines a thread-safe interface to the [`GENERATE_RANDOM_BYTES`] Secure
 /// Monitor call.
@@ -32,8 +34,6 @@ pub const GENERATE_RANDOM_BYTES: FunctionId =
 /// Panics when `buf.len()` requests for more than the allowed number of
 /// bytes as explained in the documentatin for [`GENERATE_RANDOM_BYTES`].
 pub fn generate_random_bytes(buf: &mut [u8]) {
-    static CRITICAL_SECTION: SpinLock<()> = SpinLock::new(());
-
     // The size of `GenerateRandomBytes()` output is constrained by availability
     // of usable registers so we need to make sure not to exceed this limit.
     assert!(buf.len() <= size_of::<SecureMonitorContext>() - size_of::<u64>());
@@ -43,16 +43,15 @@ pub fn generate_random_bytes(buf: &mut [u8]) {
         .function(GENERATE_RANDOM_BYTES)
         .input(0, buf.len() as u64);
 
-    // Perform the Secure Monitor call.
     unsafe {
-        let _irq_guard = ScopedInterruptDisable::start();
-        let _section_token = CRITICAL_SECTION.lock();
+        CRITICAL_SECTION.enter(|_| {
+            // Call the Secure Monitor and validate the result.
+            call_privileged_secure_monitor_function(&mut ctx);
+            assert_eq!(ctx.result(), result::SUCCESS);
 
-        call_privileged_secure_monitor_function(&mut ctx);
-        assert_eq!(ctx.result(), result::SUCCESS);
-
-        // Copy the resulting bytes back to `buf`.
-        ptr::copy_nonoverlapping(ctx.as_ptr(), buf.as_mut_ptr(), buf.len());
+            // Copy the resulting bytes to `buf`.
+            ptr::copy_nonoverlapping(ctx.as_ptr(), buf.as_mut_ptr(), buf.len());
+        })
     }
 }
 
@@ -91,10 +90,12 @@ pub mod init {
         // of usable registers so we need to make sure not to exceed this limit.
         assert!(buf.len() <= size_of::<SecureMonitorContext>() - size_of::<u64>());
 
-        // Prepare the context and perform the call.
+        // Prepare the context for the call.
         let mut ctx = SecureMonitorContext::new()
             .function(super::GENERATE_RANDOM_BYTES)
             .input(0, buf.len() as u64);
+
+        // Call the Secure Monitor and validate the result.
         smc::<SUPERVISOR_ID>(&mut ctx);
         assert_eq!(ctx.result(), result::SUCCESS);
 

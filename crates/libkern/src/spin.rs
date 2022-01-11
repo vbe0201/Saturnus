@@ -1,28 +1,27 @@
-//! Implementations of cache-aligned and unaligned spin locks as
-//! synchronization primitives.
+//! Useful spin-based synchronization primitives for the Kernel.
 
-use crate::scoped_lock::ScopedLock;
+use crate::critical_section::CriticalSection as CriticalSectionBase;
 
-/// A [spin lock](https://en.m.wikipedia.org/wiki/Spinlock) providing mutually
-/// exclusive acccess to a value.
-pub type SpinLock<T> = ScopedLock<T, UnalignedSpinLockImpl>;
+// Spin Lock implementation guidelines:
+//
+// - The architecture-specific lock type must implement `lock_api::RawMutex`.
+//     - An exemption is the `try_lock` method - we don't need this facility.
+//
+// - The lock type must ensure exclusivity across multiple executing CPUs.
+//
+// - The lock type should be constructible in const context.
 
 #[cfg(target_arch = "aarch64")]
 #[path = "_arch/aarch64/spin_lock.rs"]
 mod arch_spin_lock;
-use self::arch_spin_lock::UnalignedSpinLock as UnalignedSpinLockImpl;
 
-impl<T> ScopedLock<T, UnalignedSpinLockImpl> {
-    /// Creates a new unaligned spin lock around a given value.
-    #[inline(always)]
-    pub const fn new(value: T) -> Self {
-        Self::new_with_impl(value, UnalignedSpinLockImpl::new())
-    }
-}
+#[cfg(target_arch = "aarch64")]
+pub use arch_spin_lock::UnalignedSpinLock as UnalignedSpinLockImpl;
 
-impl<T: Default> Default for ScopedLock<T, UnalignedSpinLockImpl> {
-    #[inline(always)]
-    fn default() -> Self {
-        Self::new(T::default())
-    }
-}
+/// A spin-based mutex implementation ensuring exclusive access to a resource.
+pub type SpinLock<T> = lock_api::Mutex<UnalignedSpinLockImpl, T>;
+/// The access guard to a protected resource obtained from locking [`SpinLock`].
+pub type SpinLockGuard<'a, T> = lock_api::MutexGuard<'a, UnalignedSpinLockImpl, T>;
+
+/// A critical section that ensures exclusivity through a spin lock.
+pub type CriticalSection = CriticalSectionBase<UnalignedSpinLockImpl>;

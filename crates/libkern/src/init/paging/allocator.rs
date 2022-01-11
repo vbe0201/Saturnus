@@ -270,6 +270,6 @@ unsafe impl PageAllocator for InitialPageAllocator {
 
     #[inline]
     unsafe fn free(&mut self, addr: PhysAddr, size: usize) {
-        unsafe { self.free_list.free(addr, size) }
+        self.free_list.free(addr, size);
     }
 }
