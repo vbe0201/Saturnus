@@ -1,4 +1,4 @@
-use core::cell::UnsafeCell;
+use core::{arch::asm, cell::UnsafeCell};
 
 use static_assertions::assert_eq_size;
 

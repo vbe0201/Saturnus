@@ -8,7 +8,6 @@
   "executables": true,
   "features": "+a57,+crc,+crypto,+strict-align,-fp-armv8",
   "is-builtin": false,
-  "has-elf-tls": false,
   "has-rpath": false,
   "linker": "rust-lld",
   "linker-flavor": "ld.lld",

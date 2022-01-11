@@ -9,12 +9,7 @@
 #![no_std]
 #![allow(unreachable_patterns)]
 #![deny(rustdoc::broken_intra_doc_links)]
-#![feature(
-    asm,
-    const_fn_trait_bound,
-    const_mut_refs,
-    option_result_unwrap_unchecked
-)]
+#![feature(const_fn_trait_bound, const_mut_refs)]
 
 pub mod bsp;
 pub mod critical_section;

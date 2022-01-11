@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(asm, global_asm, naked_functions, option_get_or_insert_default)]
+#![feature(asm_sym, naked_functions, option_get_or_insert_default)]
 #![deny(unsafe_op_in_unsafe_fn, rustdoc::broken_intra_doc_links)]
 
 #[macro_use]
@@ -25,7 +25,7 @@ use page_allocator::PageAllocator;
 use crate::loader::KernelMap;
 
 // Source linker entrypoint from assembly.
-global_asm!(
+::core::arch::global_asm!(
     r#"
     .section .text.r0, "ax", %progbits
     .global _start
@@ -54,7 +54,7 @@ pub unsafe extern "C" fn main(
     /* x1 */ _kernel_map: *const KernelMap,
     /* x2 */ _ini1_base: usize,
 ) -> ! {
-    asm!(
+    ::core::arch::asm!(
         r#"
         .macro REL_ADR register, symbol
             adrp \register, \symbol

@@ -5,6 +5,8 @@ macro_rules! read_msr {
         match () {
             #[cfg(target_arch = "aarch64")]
             () => unsafe {
+                use ::core::arch::asm;
+
                 let x: $T;
                 asm!(concat!("mrs {0:", $width, "}, ", $name), out(reg) x, options(nomem, nostack));
                 x
@@ -21,7 +23,10 @@ macro_rules! write_msr {
     ($width:literal, $name:literal, $val:expr) => {
         match $val {
             #[cfg(target_arch = "aarch64")]
-            val => unsafe { asm!(concat!("msr ", $name, ", {0:", $width, "}"), in(reg) val, options(nomem, nostack)) },
+            val => unsafe {
+                use ::core::arch::asm;
+                asm!(concat!("msr ", $name, ", {0:", $width, "}"), in(reg) val, options(nomem, nostack));
+            },
 
             #[cfg(not(target_arch = "aarch64"))]
             _ => unimplemented!(),

@@ -38,7 +38,7 @@ macro_rules! linker_symbol {
         #[allow(unused_unsafe)]
         unsafe {
             let ptr: *mut $T;
-            asm!(
+            ::core::arch::asm!(
                 concat!("adrp {0}, ", stringify!($name)),
                 concat!("add {0}, {0}, #:lo12:", stringify!($name)),
                 out(reg) ptr

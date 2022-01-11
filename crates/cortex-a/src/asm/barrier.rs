@@ -17,7 +17,7 @@ macro_rules! barrier_types {
             unsafe fn __dsb() {
                 match () {
                     #[cfg(target_arch = "aarch64")]
-                    () => unsafe { asm!(concat!("dsb ", $asm), options(nostack)) },
+                    () => unsafe { ::core::arch::asm!(concat!("dsb ", $asm), options(nostack)) },
                     #[cfg(not(target_arch = "aarch64"))]
                     () => unimplemented!(),
                 }
@@ -28,7 +28,7 @@ macro_rules! barrier_types {
             unsafe fn __dmb() {
                 match () {
                     #[cfg(target_arch = "aarch64")]
-                    () => unsafe { asm!(concat!("dmb ", $asm), options(nostack)) },
+                    () => unsafe { ::core::arch::asm!(concat!("dmb ", $asm), options(nostack)) },
                     #[cfg(not(target_arch = "aarch64"))]
                     () => unimplemented!(),
                 }
@@ -130,7 +130,7 @@ pub unsafe fn dsb<T: BarrierType>() {
 pub unsafe fn isb() {
     match () {
         #[cfg(target_arch = "aarch64")]
-        () => unsafe { asm!("isb sy", options(nostack)) },
+        () => unsafe { ::core::arch::asm!("isb sy", options(nostack)) },
         #[cfg(not(target_arch = "aarch64"))]
         () => unimplemented!(),
     }

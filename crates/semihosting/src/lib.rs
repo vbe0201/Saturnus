@@ -37,7 +37,6 @@
 //! [pdf]: http://infocenter.arm.com/help/topic/com.arm.doc.dui0471e/DUI0471E_developing_for_arm_processors.pdf
 
 #![no_std]
-#![feature(asm)]
 #![deny(unsafe_op_in_unsafe_fn, rustdoc::broken_intra_doc_links)]
 
 #[macro_use]
@@ -69,7 +68,7 @@ pub unsafe fn syscall<T>(nr: usize, arg: &T) -> usize {
 #[inline(always)]
 pub unsafe fn syscall1(mut nr: usize, arg: usize) -> usize {
     unsafe {
-        asm!(
+        ::core::arch::asm!(
             "hlt #0xF000",
             inout("x0") nr => nr,
             in("x1") arg,

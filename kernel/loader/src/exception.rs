@@ -1,4 +1,4 @@
-use core::{cell::UnsafeCell, fmt};
+use core::{arch::global_asm, cell::UnsafeCell, fmt};
 
 use cortex_a::{asm, registers::*};
 use tock_registers::{

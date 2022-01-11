@@ -1,5 +1,7 @@
 //! Handling and processing of interrupts for the executing core.
 
+use core::arch::asm;
+
 use cortex_a::registers::DAIF;
 use tock_registers::interfaces::{ReadWriteable, Readable};
 
