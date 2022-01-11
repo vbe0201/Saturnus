@@ -133,8 +133,7 @@ fn execute_action(args: &Arguments, pkg: Package) -> anyhow::Result<()> {
         }
         Action::Run(ref cfg) => {
             let elf = xtask::build::build(pkg, cfg.bsp.as_deref(), cfg.release)?;
-            let raw = xtask::build::generate_raw_binary(elf)?;
-            xtask::run::run(raw)?;
+            xtask::run::run(elf)?;
         }
         Action::Llvm(ref cfg) => {
             xtask::llvm::llvm(pkg, cfg.bsp.as_deref(), cfg.release, &cfg.tool, &cfg.rest)?;
