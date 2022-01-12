@@ -19,7 +19,7 @@ pub trait SupportedGranule: sealed::Sealed {}
 pub trait GranuleSupportsPage<const PAGE: usize>: sealed::Sealed {}
 
 macro_rules! define_granules {
-    ($(#[$doc:meta] $name:ident = $size:expr),*$(,)?) => {
+    ($(#[$doc:meta] $name:ident = $size:expr),* $(,)?) => {
         $(
             #[$doc]
             pub const $name: usize = $size;

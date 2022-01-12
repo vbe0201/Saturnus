@@ -1,6 +1,4 @@
 [alias]
-xtask = "run --release -p xtask --"
-
 # Aliases for packages
-kernel = "xtask -p kernel"
-loader = "xtask -p loader"
+kernel = "run --release -p xtask -- -p kernel"
+loader = "run --release -p xtask -- -p loader"

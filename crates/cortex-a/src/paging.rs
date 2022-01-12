@@ -7,16 +7,18 @@ use bitflags::bitflags;
 pub mod addr;
 pub use self::addr::{PhysAddr, VirtAddr};
 
-pub mod page;
-pub use self::page::{Page, PhysFrame};
+mod error;
+pub use self::error::*;
 
 pub mod granule;
+
+pub mod page;
+pub use self::page::{Page, PhysFrame};
 
 mod page_table;
 pub use self::page_table::PageTable;
 
-mod error;
-pub use self::error::*;
+pub mod table_entry;
 
 // TODO: Do a full cleanup.
 

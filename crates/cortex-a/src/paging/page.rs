@@ -14,7 +14,7 @@ pub struct PageSize<const SIZE: usize>;
 pub trait SupportedPageSize: sealed::Sealed {}
 
 macro_rules! define_page_sizes {
-    ($(#[$doc:meta] $name:ident = $size:expr),*$(,)?) => {
+    ($(#[$doc:meta] $name:ident = $size:expr),* $(,)?) => {
         $(
             #[$doc]
             pub const $name: usize = $size;

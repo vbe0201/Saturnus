@@ -12,6 +12,6 @@ edition = "2021"
 [dependencies]
 libutils = { package = "saturnus-libutils", path = "../libutils" }
 
-bitflags = "1"
+bitflags = "1.3.2"
 static_assertions = "1.1"
 tock-registers = { version = "0.7.x", default-features = false }
