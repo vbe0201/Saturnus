@@ -25,11 +25,25 @@ struct FreePageFrame {
     size: usize,
 }
 
+impl FreePageFrame {
+    /// Gets the size of this page frame.
+    #[inline]
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
+    /// Gets the address of this page frame in memory.
+    #[inline]
+    pub fn address(&self) -> usize {
+        self as *const _ as usize
+    }
+}
+
 impl FreeList {
     /// Creates a new list of free page frames in an uninitialized state.
     #[inline(always)]
     pub const fn new() -> Self {
-        FreeList {
+        Self {
             head: ptr::null_mut(),
         }
     }
@@ -66,6 +80,7 @@ impl FreeList {
     pub fn try_allocate(&mut self, address: usize, size: usize) -> Result<(), ()> {
         let mut current_node = self.head;
         let mut previous_next = &mut current_node as *mut _;
+
         while !current_node.is_null() {
             let current = unsafe { &mut *current_node };
 
@@ -135,16 +150,16 @@ impl FreeList {
 
         let chunk = address.as_mut_ptr::<FreePageFrame>();
         if !current_node.is_null() {
-            let current = &mut *current_node;
-
             let chunk_start = address.as_usize();
             let chunk_end = chunk_start + size;
             loop {
+                let current = &mut *current_node;
+
                 let current_start = current.address();
                 let current_end = current_start + current.size();
 
                 // Attemt to coalesce the chunk with existing nodes where applicable.
-                if chunk_start <= chunk_end {
+                if chunk_start < chunk_end {
                     // Do fragmentation at front.
                     if chunk_end < current_start {
                         *chunk = FreePageFrame {
@@ -167,10 +182,11 @@ impl FreeList {
 
                 // Advance to the next node in the list.
                 previous_next = &mut current.next as *mut _;
-                current_node = current.next;
 
                 // If this is the last node of the list, set the chunk to free as tail.
                 if !current.next.is_null() {
+                    current_node = current.next;
+                } else {
                     *chunk = FreePageFrame {
                         next: ptr::null_mut(),
                         size,
@@ -193,20 +209,6 @@ impl FreeList {
     }
 }
 
-impl FreePageFrame {
-    /// Gets the size of this page frame.
-    #[inline]
-    pub fn size(&self) -> usize {
-        self.size
-    }
-
-    /// Gets the address of this page frame in memory.
-    #[inline]
-    pub fn address(&self) -> usize {
-        self as *const _ as usize
-    }
-}
-
 /// An allocator to be used for page setup during initial kernel bootstrap.
 ///
 /// It features securely randomized page allocations by feeding in a desired
@@ -224,9 +226,6 @@ pub struct InitialPageAllocator {
 }
 
 impl InitialPageAllocator {
-    /// The page size assumed by this allocator.
-    pub const PAGE_SIZE: usize = page::_4K;
-
     /// Creates a new allocator in its default state and binds its allocations to
     /// the memory region starting from `base`.
     pub const fn new(base: PhysAddr) -> Self {
@@ -255,14 +254,17 @@ impl InitialPageAllocator {
         loop {
             let random_address = aligned_start
                 + unsafe { system_control::init::generate_random_range(0, max_range) * align };
+
             if self.free_list.try_allocate(random_address, size).is_ok() {
-                return unsafe { PhysAddr::new_unchecked(random_address) };
+                return PhysAddr::new(random_address);
             }
         }
     }
 }
 
 unsafe impl PageAllocator for InitialPageAllocator {
+    const PAGE_SIZE: usize = page::_4K;
+
     #[inline]
     fn allocate(&mut self, size: usize) -> Option<PhysAddr> {
         Some(self.allocate_aligned(size, size))

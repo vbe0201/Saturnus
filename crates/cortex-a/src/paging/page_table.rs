@@ -3,7 +3,7 @@ use core::ptr::NonNull;
 use super::{
     granule::{self, Granule, GranuleSupportsPage, SupportedGranule},
     page::{self, PageSize, SupportedPageSize},
-    FrameAllocator, MapError, Page, PageFlags, PhysAddr, PhysFrame, VirtAddr,
+    FrameAllocator, MapError, Page, PhysAddr, PhysFrame, VirtAddr,
 };
 
 /// Provides a way to translate physical addresses to virtual addresses.

@@ -1,3 +1,5 @@
+use libutils::units::kib;
+
 use super::page;
 
 mod sealed {
@@ -31,11 +33,11 @@ macro_rules! define_granules {
 
 define_granules![
     /// 4-KiB granule.
-    _4K = 4 << 10,
+    _4K = kib(4) as usize,
     /// 16-KiB granule.
-    _16K = 16 << 10,
+    _16K = kib(16) as usize,
     /// 64-KiB granule.
-    _64K = 64 << 10,
+    _64K = kib(64) as usize,
 ];
 
 impl GranuleSupportsPage<{ page::_4K }> for Granule<_4K> {}

@@ -1,5 +1,7 @@
 //! Abstractions for virtual memory pages.
 
+use libutils::units::{gib, kib, mib};
+
 use super::{PhysAddr, VirtAddr};
 
 mod sealed {
@@ -27,21 +29,21 @@ macro_rules! define_page_sizes {
 #[rustfmt::skip]
 define_page_sizes![
     /// 4 KiB large virtual memory page.
-    _4K = 4 << 10,
+    _4K = kib(4) as usize,
     /// 2 MiB large virtual memory page.
-    _2M = 2 << 20,
+    _2M = mib(2) as usize,
     /// 1 GiB large virtual memory page.
-    _1G = 1 << 30,
+    _1G = gib(1) as usize,
 
     /// 16 KiB large virtual memory page.
-    _16K = 16 << 10,
+    _16K = kib(16) as usize,
     /// 32 MiB large virtual memory page.
-    _32M = 32 << 20,
+    _32M = mib(32) as usize,
 
     /// 512 MiB large virtual memory page.
-    _512M = 512 << 20,
+    _512M = mib(512) as usize,
     /// 64 KiB large virtual memory page.
-    _64K = 64 << 10,
+    _64K = kib(64) as usize,
 ];
 
 /// Error type used to indicate that a virtual address is not aligned

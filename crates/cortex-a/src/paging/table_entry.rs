@@ -3,12 +3,54 @@
 //! This module provides Level 1, 2 and 3 descriptors which assume page
 //! sizes with 4KiB granularity and 48-bit OAs.
 
+use core::mem;
+
 use bitflags::bitflags;
+use libutils::units::{gb, mb};
 use tock_registers::{fields::Field, register_bitfields};
 
-use super::addr::PhysAddr;
+use super::{
+    addr::PhysAddr,
+    page::{PageSize, SupportedPageSize},
+};
 
-type DescriptorField = Field<u64, STAGE1_TABLE_DESCRIPTOR::Register>;
+/// Gets the size of an L1 block in memory.
+#[inline(always)]
+pub const fn l1_block_size<const PAGE_SIZE: usize>() -> u64
+where
+    PageSize<PAGE_SIZE>: SupportedPageSize,
+{
+    gb(1)
+}
+
+/// Gets the size of an L2 block in memory.
+#[inline(always)]
+pub const fn l2_block_size<const PAGE_SIZE: usize>() -> u64
+where
+    PageSize<PAGE_SIZE>: SupportedPageSize,
+{
+    mb(2)
+}
+
+/// Gets the size of an L3 block in memory.
+#[inline(always)]
+pub const fn l3_block_size<const PAGE_SIZE: usize>() -> u64
+where
+    PageSize<PAGE_SIZE>: SupportedPageSize,
+{
+    PAGE_SIZE as u64
+}
+
+/// Gets the maximum number of page table descriptors based on the chosen
+/// page size.
+#[inline(always)]
+pub const fn max_table_descriptors<const PAGE_SIZE: usize>() -> u32
+where
+    PageSize<PAGE_SIZE>: SupportedPageSize,
+{
+    // `u64` here is representative of the `PageTableDescriptor` types further below.
+    (PAGE_SIZE / mem::size_of::<u64>()) as u32
+}
 
 // Table descriptor per ARMv8-A Architecture Reference Manual Figure D5-14.
 register_bitfields! {
@@ -116,6 +158,8 @@ register_bitfields! {
         VALID OFFSET(0) NUMBITS(1) []
     ]
 }
+
+type DescriptorField = Field<u64, STAGE1_TABLE_DESCRIPTOR::Register>;
 
 bitflags! {
     /// Representation of the software-reserved bits in a [`PageTableEntry`].
@@ -300,6 +344,7 @@ macro_rules! impl_page_table_descriptor {
 }
 
 /// Representation of a Level 1 Page Table Descriptor.
+#[derive(Debug, PartialEq)]
 #[repr(transparent)]
 pub struct L1PageTableDescriptor(u64);
 
@@ -323,6 +368,7 @@ impl_page_table_descriptor!(L1PageTableDescriptor);
 assert_eq_size!(L1PageTableDescriptor, u64);
 
 /// Representation of a Level 2 Page Table Descriptor.
+#[derive(Debug, PartialEq)]
 #[repr(transparent)]
 pub struct L2PageTableDescriptor(u64);
 
@@ -346,6 +392,7 @@ impl_page_table_descriptor!(L2PageTableDescriptor);
 assert_eq_size!(L2PageTableDescriptor, u64);
 
 /// Representation of a Level 3 Page Table Descriptor.
+#[derive(Debug, PartialEq)]
 #[repr(transparent)]
 pub struct L3PageTableDescriptor(u64);
 

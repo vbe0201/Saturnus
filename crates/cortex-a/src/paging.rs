@@ -2,8 +2,6 @@
 
 use core::ptr::NonNull;
 
-use bitflags::bitflags;
-
 pub mod addr;
 pub use self::addr::{PhysAddr, VirtAddr};
 
@@ -15,31 +13,32 @@ pub mod granule;
 pub mod page;
 pub use self::page::{Page, PhysFrame};
 
-mod page_table;
-pub use self::page_table::PageTable;
+//mod page_table;
+//pub use self::page_table::PageTable;
 
 pub mod table_entry;
 
 // TODO: Do a full cleanup.
 
-/// A trait that is able to allocate physical page frames with a static size.
+/// A trait that is able to allocate memory within physical page frames.
 ///
-/// The APIs are resistant against misuse in that they only allow statically
-/// validated and known page sizes. [`PhysAddr`]s are used to mark the starting
-/// address of pages in memory.
+/// This means that the user can choose to allocate arbitrary quantities of
+/// memory not necessarily restricted to full pages.
 ///
 /// # Safety
 ///
 /// Valid [`PhysAddr`]s representing the start addresses of physical page frames
-/// in memory must be returned. This implies correct alignment of the address.
+/// in memory must be returned. Correct alignment of these addresses is assumed.
 ///
-/// The following `SIZE` bytes from that address may not be implicitly modified
-/// until a user explicitly frees the frame.
+/// The following `size` bytes from that address may not be implicitly modified
+/// until a user explicitly frees the allocation with [`PageAllocator::free`].
 pub unsafe trait PageAllocator {
-    /// Tries to allocate one or more new page frames of `size` bytes
-    /// in total.
+    /// The page size assumed by the allocator.
+    const PAGE_SIZE: usize;
+
+    /// Tries to allocate a contiguous memory region of `size` bytes.
     ///
-    /// On success the start address to the (subsequent) frames is returned,
+    /// On success the start address to the allocated memory is returned,
     /// [`None`] on failure.
     ///
     /// The allocated memory region may or may not have its contents
@@ -47,12 +46,12 @@ pub unsafe trait PageAllocator {
     /// with it.
     fn allocate(&mut self, size: usize) -> Option<PhysAddr>;
 
-    /// Frees one or more subsequently allocated frames of `size` bytes in total
-    /// given their physical starting address in memory.
+    /// Frees a contiguously allocated memory region of `size` bytes in total
+    /// given the physical starting address in memory.
     ///
     /// # Safety
     ///
-    /// This method is wildly unsafe and will trigger UB if `addr` and `SIZE`
+    /// This method is wildly unsafe and will trigger UB if `addr` and `size`
     /// are not a matching pair from the [`PageAllocator::allocate`] operation
     /// of that same allocator.
     ///
@@ -82,13 +81,4 @@ pub unsafe trait FrameAllocator {
     /// - `ptr` must be an currently allocated frame of **this** allocator instance.
     /// - the `SIZE` argument must be the same that was used to allocate `ptr`
     unsafe fn deallocate<const SIZE: usize>(&self, ptr: NonNull<u8>);
-}
-
-bitflags! {
-    /// Possible flags for a page table entry that points to a block / page in virtual memory.
-    #[repr(transparent)]
-    pub struct PageFlags: u64 {
-        /// The Execute-never or Unprivileged execute-never field.
-        const UXN = 1 << 54;
-    }
 }
