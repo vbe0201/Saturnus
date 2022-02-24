@@ -1,0 +1,10 @@
+[package]
+name = "saturnus-kernel"
+version = "0.1.0"
+authors = ["Valentin B. <valentin.be@protonmail.com>", "Justus K <justus.k@protonmail.com>"]
+description = "The Saturnus microkernel"
+license = "GPL-2.0"
+repository = "https://github.com/vbe0201/Saturnus"
+edition = "2021"
+
+[dependencies]

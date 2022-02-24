@@ -1,11 +1,6 @@
 [workspace]
 members = [
-    "crates/*",
-
-    "kernel",
-    "kernel/loader",
-
-    "xtask",
+    "saturnus/*",
 ]
 
 [profile.release]
@@ -15,6 +10,6 @@ opt-level = "s"
 lto = "fat"
 
 # We override the `opt-level` in debug builds because somehow
-# we segfault rustc or LLVM when building with `0` opt-level
+# we segfault rustc or LLVM when building with opt-level 0.
 [profile.dev]
 opt-level = 1
