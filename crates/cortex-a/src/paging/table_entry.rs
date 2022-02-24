@@ -6,7 +6,7 @@
 use core::mem;
 
 use bitflags::bitflags;
-use libutils::units::{gb, mb};
+use libutils::units::{gib, mib};
 use tock_registers::{fields::Field, register_bitfields};
 
 use super::{
@@ -20,7 +20,7 @@ pub const fn l1_block_size<const PAGE_SIZE: usize>() -> u64
 where
     PageSize<PAGE_SIZE>: SupportedPageSize,
 {
-    gb(1)
+    gib(1)
 }
 
 /// Gets the size of an L2 block in memory.
@@ -29,7 +29,7 @@ pub const fn l2_block_size<const PAGE_SIZE: usize>() -> u64
 where
     PageSize<PAGE_SIZE>: SupportedPageSize,
 {
-    mb(2)
+    mib(2)
 }
 
 /// Gets the size of an L3 block in memory.
@@ -44,12 +44,12 @@ where
 /// Gets the maximum number of page table descriptors based on the chosen
 /// page size.
 #[inline(always)]
-pub const fn max_table_descriptors<const PAGE_SIZE: usize>() -> u32
+pub const fn max_table_descriptors<const PAGE_SIZE: usize>() -> usize
 where
     PageSize<PAGE_SIZE>: SupportedPageSize,
 {
     // `u64` here is representative of the `PageTableDescriptor` types further below.
-    (PAGE_SIZE / mem::size_of::<u64>()) as u32
+    PAGE_SIZE / mem::size_of::<u64>()
 }
 
 // Table descriptor per ARMv8-A Architecture Reference Manual Figure D5-14.
@@ -159,8 +159,6 @@ register_bitfields! {
     ]
 }
 
-type DescriptorField = Field<u64, STAGE1_TABLE_DESCRIPTOR::Register>;
-
 bitflags! {
     /// Representation of the software-reserved bits in a [`PageTableEntry`].
     ///
@@ -180,11 +178,25 @@ bitflags! {
 #[repr(u8)]
 pub enum Shareability {
     /// Non-shareable domain.
-    NonShareable,
+    NonShareable = 0b00,
     /// Outer shareable domain.
-    OuterShareable,
+    OuterShareable = 0b10,
     /// Inner shareable domain.
-    InnerShareable,
+    InnerShareable = 0b11,
+}
+
+impl tock_registers::fields::TryFromValue<u64> for Shareability {
+    type EnumType = Self;
+
+    fn try_from(v: u64) -> Option<Self::EnumType> {
+        use Shareability::*;
+        match v {
+            0b00 => Some(NonShareable),
+            0b10 => Some(OuterShareable),
+            0b11 => Some(InnerShareable),
+            _ => None,
+        }
+    }
 }
 
 /// Access Permissions for the memory region denoted by a [`PageTableEntry`].
@@ -192,13 +204,13 @@ pub enum Shareability {
 #[repr(u8)]
 pub enum AccessPermission {
     /// Read/write access in EL1 only.
-    ReadWriteEl1,
+    ReadWriteEl1 = 0b00,
     /// Read/write access in EL1 and EL0.
-    ReadWrite,
+    ReadWrite = 0b01,
     /// Read-only access in EL1 only.
-    ReadOnlyEl1,
+    ReadOnlyEl1 = 0b10,
     /// Read-only access in EL1 and EL0.
-    ReadOnly,
+    ReadOnly = 0b11,
 }
 
 impl AccessPermission {
@@ -217,6 +229,86 @@ impl AccessPermission {
     }
 }
 
+impl tock_registers::fields::TryFromValue<u64> for AccessPermission {
+    type EnumType = Self;
+
+    fn try_from(v: u64) -> Option<Self::EnumType> {
+        use AccessPermission::*;
+        match v {
+            0b00 => Some(ReadWriteEl1),
+            0b01 => Some(ReadWrite),
+            0b10 => Some(ReadOnlyEl1),
+            0b11 => Some(ReadOnly),
+            _ => None,
+        }
+    }
+}
+
+/// Representation of the generic Page Descriptor API that applies equally
+/// to all the different levels.
+pub trait PageTableDescriptor {
+    /// Reads the bitmask of [`SoftwareReserved`] bits out of this entry.
+    fn software_reserved(&self) -> SoftwareReserved;
+
+    fn set_software_reserved(&mut self, value: SoftwareReserved);
+
+    /// Whether this entry is tagged unprivileged execute-never.
+    fn user_execute_never(&self) -> bool;
+
+    fn set_user_execute_never(&mut self, value: bool);
+
+    /// Whether this entry is tagged privileged execute-never.
+    fn privileged_execute_never(&self) -> bool;
+
+    fn set_privileged_execute_never(&mut self, value: bool);
+
+    /// Whether this entry is one of a contiguous set of entries.
+    fn contiguous(&self) -> bool;
+
+    fn set_contiguous(&mut self, value: bool);
+
+    /// Whether this entry is tagged global.
+    fn global(&self) -> bool;
+
+    fn set_global(&mut self, value: bool);
+
+    /// Whether this entry has already been accessed for the first itme.
+    fn accessed(&self) -> bool;
+
+    fn set_accessed(&mut self, value: bool);
+
+    /// Gets the [`Shareability`] of this entry.
+    fn shareability(&self) -> Shareability;
+
+    fn set_shareability(&mut self, value: Shareability);
+
+    /// Gets the [`AccessPermission`] for the memory region of this entry.
+    fn access_permission(&self) -> AccessPermission;
+
+    fn set_access_permission(&mut self, value: AccessPermission);
+
+    /// Whether this entry is tagged non-secure.
+    fn non_secure(&self) -> bool;
+
+    fn set_non_secure(&mut self, value: bool);
+
+    // TODO: Attributes.
+
+    /// Whether this entry represents a block.
+    fn is_block(&self) -> bool;
+
+    /// Whether this entry represents a table.
+    fn is_table(&self) -> bool;
+
+    /// Whether this entry is empty.
+    fn is_empty(&self) -> bool;
+
+    /// Whether this entry is valid and mapped.
+    fn is_valid(&self) -> bool;
+
+    fn set_valid(&mut self, value: bool);
+}
+
 macro_rules! impl_page_table_descriptor {
     ($descriptor:ident) => {
         impl $descriptor {
@@ -225,119 +317,150 @@ macro_rules! impl_page_table_descriptor {
             pub const fn new() -> Self {
                 Self(0)
             }
+        }
 
-            #[inline(always)]
-            const fn read(&self, field: DescriptorField) -> u64 {
-                (self.0 & (field.mask << field.shift)) >> field.shift
+        impl From<u64> for $descriptor {
+            fn from(descriptor: u64) -> Self {
+                Self(descriptor)
             }
+        }
 
-            #[inline(always)]
-            const fn is_set(&self, field: DescriptorField) -> bool {
-                self.0 & (field.mask << field.shift) != 0
-            }
-
-            /// Reads the bitmask of [`SoftwareReserved`] bits out of this entry.
+        impl PageTableDescriptor for $descriptor {
             #[inline]
-            pub const fn software_reserved(&self) -> SoftwareReserved {
-                let bits = self.read(STAGE1_TABLE_DESCRIPTOR::SOFTWARE_RESERVED);
-                unsafe { SoftwareReserved::from_bits_unchecked(bits as u8) }
+            fn software_reserved(&self) -> SoftwareReserved {
+                let bits = STAGE1_TABLE_DESCRIPTOR::SOFTWARE_RESERVED.read(self.0);
+                SoftwareReserved::from_bits_truncate(bits as u8)
             }
 
-            /// Whether this entry is tagged unprivileged execute-never.
             #[inline]
-            pub const fn user_execute_never(&self) -> bool {
-                self.is_set(STAGE1_TABLE_DESCRIPTOR::UXN)
+            fn set_software_reserved(&mut self, value: SoftwareReserved) {
+                self.0 = STAGE1_TABLE_DESCRIPTOR::SOFTWARE_RESERVED
+                    .val(value.bits() as _)
+                    .modify(self.0);
             }
 
-            /// Whether this entry is tagged privileged execute-never.
             #[inline]
-            pub const fn privileged_execute_never(&self) -> bool {
-                self.is_set(STAGE1_TABLE_DESCRIPTOR::PXN)
+            fn user_execute_never(&self) -> bool {
+                STAGE1_TABLE_DESCRIPTOR::UXN.is_set(self.0)
             }
 
-            /// Whether this entry is one of a contiguous set of entries.
             #[inline]
-            pub const fn contiguous(&self) -> bool {
-                self.is_set(STAGE1_TABLE_DESCRIPTOR::CONTIGUOUS)
+            fn set_user_execute_never(&mut self, value: bool) {
+                self.0 = STAGE1_TABLE_DESCRIPTOR::UXN.val(value as _).modify(self.0);
             }
 
-            /// Whether this entry is tagged global.
             #[inline]
-            pub const fn global(&self) -> bool {
-                !self.is_set(STAGE1_TABLE_DESCRIPTOR::NG)
+            fn privileged_execute_never(&self) -> bool {
+                STAGE1_TABLE_DESCRIPTOR::PXN.is_set(self.0)
             }
 
-            /// Whether this entry has already been accessed for the first time.
             #[inline]
-            pub const fn accessed(&self) -> bool {
-                self.is_set(STAGE1_TABLE_DESCRIPTOR::AF)
+            fn set_privileged_execute_never(&mut self, value: bool) {
+                self.0 = STAGE1_TABLE_DESCRIPTOR::PXN.val(value as _).modify(self.0);
             }
 
-            /// Gets the [`Shareability`] of this entry.
             #[inline]
-            pub const fn shareability(&self) -> Shareability {
-                use STAGE1_TABLE_DESCRIPTOR::SH;
+            fn contiguous(&self) -> bool {
+                STAGE1_TABLE_DESCRIPTOR::CONTIGUOUS.is_set(self.0)
+            }
 
-                let value = self.read(SH);
-                match value {
-                    _ if value == SH::None.value => Shareability::NonShareable,
-                    _ if value == SH::Outer.value => Shareability::OuterShareable,
-                    _ if value == SH::Inner.value => Shareability::InnerShareable,
-                    _ => unreachable!(),
+            #[inline]
+            fn set_contiguous(&mut self, value: bool) {
+                self.0 = STAGE1_TABLE_DESCRIPTOR::CONTIGUOUS
+                    .val(value as _)
+                    .modify(self.0);
+            }
+
+            #[inline]
+            fn global(&self) -> bool {
+                !STAGE1_TABLE_DESCRIPTOR::NG.is_set(self.0)
+            }
+
+            #[inline]
+            fn set_global(&mut self, value: bool) {
+                self.0 = STAGE1_TABLE_DESCRIPTOR::NG
+                    .val((!value) as _)
+                    .modify(self.0);
+            }
+
+            #[inline]
+            fn accessed(&self) -> bool {
+                STAGE1_TABLE_DESCRIPTOR::AF.is_set(self.0)
+            }
+
+            #[inline]
+            fn set_accessed(&mut self, value: bool) {
+                self.0 = STAGE1_TABLE_DESCRIPTOR::AF.val(value as _).modify(self.0);
+            }
+
+            #[inline]
+            fn shareability(&self) -> Shareability {
+                STAGE1_TABLE_DESCRIPTOR::SH.read_as_enum(self.0).unwrap()
+            }
+
+            #[inline]
+            fn set_shareability(&mut self, value: Shareability) {
+                self.0 = STAGE1_TABLE_DESCRIPTOR::SH.val(value as _).modify(self.0);
+            }
+
+            #[inline]
+            fn access_permission(&self) -> AccessPermission {
+                // SAFETY: `AP` is 2 bits wide and `TryFromValue` covers all cases.
+                unsafe {
+                    STAGE1_TABLE_DESCRIPTOR::AP
+                        .read_as_enum(self.0)
+                        .unwrap_unchecked()
                 }
             }
 
-            /// Gets the [`AccessPermission`] for the memory region of this entry.
             #[inline]
-            pub const fn access_permission(&self) -> AccessPermission {
-                use STAGE1_TABLE_DESCRIPTOR::AP;
-
-                let value = self.read(AP);
-                match value {
-                    _ if value == AP::RW_EL1.value => AccessPermission::ReadWriteEl1,
-                    _ if value == AP::RW_EL1_EL0.value => AccessPermission::ReadWrite,
-                    _ if value == AP::RO_EL1.value => AccessPermission::ReadOnlyEl1,
-                    _ if value == AP::RO_EL1_EL0.value => AccessPermission::ReadOnly,
-                    _ => unreachable!(),
-                }
+            fn set_access_permission(&mut self, value: AccessPermission) {
+                self.0 = STAGE1_TABLE_DESCRIPTOR::AP.val(value as _).modify(self.0);
             }
 
-            /// Whether this entry is tagged non-secure.
             #[inline]
-            pub const fn non_secure(&self) -> bool {
-                self.is_set(STAGE1_TABLE_DESCRIPTOR::NS)
+            fn non_secure(&self) -> bool {
+                STAGE1_TABLE_DESCRIPTOR::NS.is_set(self.0)
+            }
+
+            #[inline]
+            fn set_non_secure(&mut self, value: bool) {
+                self.0 = STAGE1_TABLE_DESCRIPTOR::NS.val(value as _).modify(self.0);
             }
 
             // TODO: Attributes.
 
-            /// Whether this entry represents a block.
             #[inline]
-            pub const fn is_block(&self) -> bool {
+            fn is_block(&self) -> bool {
                 let software_bits = self.software_reserved();
                 software_bits.contains(SoftwareReserved::VALID)
-                    && !self.is_set(STAGE1_TABLE_DESCRIPTOR::TYPE)
+                    && !STAGE1_TABLE_DESCRIPTOR::TYPE.is_set(self.0)
             }
 
-            /// Whether this entry represents a table.
             #[inline]
-            pub const fn is_table(&self) -> bool {
+            fn is_table(&self) -> bool {
                 let software_bits = self.software_reserved();
                 !software_bits.contains(SoftwareReserved::VALID)
-                    && self.is_set(STAGE1_TABLE_DESCRIPTOR::TYPE)
+                    && STAGE1_TABLE_DESCRIPTOR::TYPE.is_set(self.0)
             }
 
-            /// Whether this entry is empty.
             #[inline]
-            pub const fn is_empty(&self) -> bool {
+            fn is_empty(&self) -> bool {
                 let software_bits = self.software_reserved();
                 !software_bits.contains(SoftwareReserved::VALID)
-                    && !self.is_set(STAGE1_TABLE_DESCRIPTOR::TYPE)
+                    && !STAGE1_TABLE_DESCRIPTOR::TYPE.is_set(self.0)
             }
 
-            /// Whether this entry is valid and mapped.
             #[inline]
-            pub const fn is_valid(&self) -> bool {
-                self.is_set(STAGE1_TABLE_DESCRIPTOR::VALID)
+            fn is_valid(&self) -> bool {
+                STAGE1_TABLE_DESCRIPTOR::VALID.is_set(self.0)
+            }
+
+            #[inline]
+            fn set_valid(&mut self, value: bool) {
+                self.0 = STAGE1_TABLE_DESCRIPTOR::VALID
+                    .val(value as _)
+                    .modify(self.0);
             }
         }
     };
@@ -351,15 +474,15 @@ pub struct L1PageTableDescriptor(u64);
 impl L1PageTableDescriptor {
     /// Gets the physical output address of this entry.
     #[inline]
-    pub const fn get_output_addr(&self) -> PhysAddr {
-        let addr = self.read(STAGE1_TABLE_DESCRIPTOR::L1_OUTPUT_ADDR_4KIB_48);
+    pub fn output_addr(&self) -> PhysAddr {
+        let addr = STAGE1_TABLE_DESCRIPTOR::L1_OUTPUT_ADDR_4KIB_48.read(self.0);
         PhysAddr::new(addr as usize)
     }
 
     /// Gets the physical address of the next L2 table.
     #[inline]
-    pub const fn get_next_table(&self) -> PhysAddr {
-        let addr = self.read(STAGE1_TABLE_DESCRIPTOR::NEXT_TABLE_ADDR_4KIB_48);
+    pub fn next_table(&self) -> PhysAddr {
+        let addr = STAGE1_TABLE_DESCRIPTOR::NEXT_TABLE_ADDR_4KIB_48.read(self.0);
         PhysAddr::new(addr as usize)
     }
 }
@@ -375,15 +498,15 @@ pub struct L2PageTableDescriptor(u64);
 impl L2PageTableDescriptor {
     /// Gets the physical output address of this entry.
     #[inline]
-    pub const fn get_output_addr(&self) -> PhysAddr {
-        let addr = self.read(STAGE1_TABLE_DESCRIPTOR::L2_OUTPUT_ADDR_4KIB_48);
+    pub fn output_addr(&self) -> PhysAddr {
+        let addr = STAGE1_TABLE_DESCRIPTOR::L2_OUTPUT_ADDR_4KIB_48.read(self.0);
         PhysAddr::new(addr as usize)
     }
 
     /// Gets the physical address of the next L3 table.
     #[inline]
-    pub const fn get_next_table(&self) -> PhysAddr {
-        let addr = self.read(STAGE1_TABLE_DESCRIPTOR::NEXT_TABLE_ADDR_4KIB_48);
+    pub fn next_table(&self) -> PhysAddr {
+        let addr = STAGE1_TABLE_DESCRIPTOR::NEXT_TABLE_ADDR_4KIB_48.read(self.0);
         PhysAddr::new(addr as usize)
     }
 }
@@ -399,8 +522,8 @@ pub struct L3PageTableDescriptor(u64);
 impl L3PageTableDescriptor {
     /// Gets the physical output address of this entry.
     #[inline]
-    pub const fn get_output_addr(&self) -> PhysAddr {
-        let addr = self.read(STAGE1_TABLE_DESCRIPTOR::L3_OUTPUT_ADDR_4KIB_48);
+    pub fn output_addr(&self) -> PhysAddr {
+        let addr = STAGE1_TABLE_DESCRIPTOR::L3_OUTPUT_ADDR_4KIB_48.read(self.0);
         PhysAddr::new(addr as usize)
     }
 }

@@ -228,7 +228,12 @@ pub struct InitialPageAllocator {
 impl InitialPageAllocator {
     /// Creates a new allocator in its default state and binds its allocations to
     /// the memory region starting from `base`.
-    pub const fn new(base: PhysAddr) -> Self {
+    ///
+    /// # Safety
+    ///
+    /// `base` must point to a safe memory region that is not otherwise used and
+    /// overridden.
+    pub const unsafe fn new(base: PhysAddr) -> Self {
         Self {
             start_address: base,
             next_free_address: base,
