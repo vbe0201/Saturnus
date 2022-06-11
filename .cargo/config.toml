@@ -1,0 +1,2 @@
+[alias]
+kernel = "run --release -p xtask --"
