@@ -1,0 +1,9 @@
+[package]
+name = "kernel-image"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+byteorder = "1.4"
+memchr = "2.5"

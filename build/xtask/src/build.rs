@@ -1,11 +1,15 @@
 //! Implementation of the build system action `build`.
 
-use std::{io::BufReader, path::PathBuf};
+use std::{fs, io::BufReader, path::PathBuf};
 
 use anyhow::{anyhow, Result};
 use xshell::{cmd, Shell};
 
-use crate::{package::Package, rustc, target::Target};
+use crate::{
+    package::{self, Package},
+    rustc,
+    target::Target,
+};
 
 /// Builds the full Saturnus kernel image and returns the path
 /// to it.
@@ -13,7 +17,29 @@ use crate::{package::Package, rustc, target::Target};
 /// The resulting binary will include both the Kernel, the Kernel
 /// Loader and all the Kernel Initial Processes (KIPs).
 pub fn build_kernel(sh: &Shell, target: &Target, release: bool) -> Result<PathBuf> {
-    todo!()
+    let kernel_loader = build(sh, &package::KERNEL_LOADER, target, release)?;
+    let kernel = build(sh, &package::KERNEL, target, release)?;
+
+    let version_major = env!("CARGO_PKG_VERSION_MAJOR").parse()?;
+    let version_minor = env!("CARGO_PKG_VERSION_MINOR").parse()?;
+    let version_patch = env!("CARGO_PKG_VERSION_PATCH").parse()?;
+
+    let image_path = {
+        let mut root = rustc::project_root();
+        root.push("target");
+        root.push("dist");
+        root
+    };
+    fs::create_dir_all(&image_path)?;
+
+    // TODO: Add support for baking in KIPs.
+    kernel_image::ImageBuilder::default()
+        .with_loader(kernel_loader)?
+        .with_kernel(kernel)?
+        .with_version(version_major, version_minor, version_patch)
+        .finalize(&image_path)?;
+
+    Ok(image_path)
 }
 
 fn build(sh: &Shell, pkg: &Package, target: &Target, release: bool) -> Result<PathBuf> {

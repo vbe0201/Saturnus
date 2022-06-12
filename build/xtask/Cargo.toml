@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+kernel-image = { path = "../kernel-image" }
+
 anyhow = "1"
 cargo_metadata = "0.14"
 clap = { version = "3.1", features = ["derive"] }
