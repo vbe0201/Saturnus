@@ -7,6 +7,7 @@ use xshell::{cmd, Shell};
 pub fn project_root() -> PathBuf {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.pop();
+    path.pop();
     path
 }
 

@@ -43,7 +43,9 @@ impl KernelMeta {
 
     /// Gets the binary size of the meta object.
     pub fn size(&self) -> usize {
-        size_of::<u32>() * 2 + size_of::<u64>() * 2 + size_of::<KernelLayout>()
+        let size = size_of::<u32>() * 2 + size_of::<u64>() * 2 + size_of::<KernelLayout>();
+        assert_eq!(size, 0x40); // Keep this in sync with actual Kernel code.
+        size
     }
 
     /// Serializes the meta to a given writer.
@@ -87,6 +89,8 @@ pub struct KernelLayout {
     // before main, we can assume we won't need to do any work here.
 }
 
+const _: () = assert!(size_of::<KernelLayout>() == 0x28);
+
 impl KernelLayout {
     /// Deserializes a layout object from a given reader.
     pub fn read(mut data: &[u8]) -> io::Result<Self> {
@@ -116,6 +120,49 @@ impl KernelLayout {
         writer.write_u32::<LE>(self.bss_end)?;
         writer.write_u32::<LE>(self.kernel_end)?;
         writer.write_u32::<LE>(self.dynamic_start)?;
+
+        Ok(())
+    }
+}
+
+/// Representation of the Kernel Loader metadata map.
+///
+/// This must be kept in sync with actual loader code
+/// at all times. Data type changes between different
+/// architectures must also be accounted for here.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[repr(C)]
+pub struct KernelLoaderMeta {
+    /// The 4 bytes loader magic value.
+    pub magic: u32,
+    /// The current kernel version.
+    pub version: u32,
+    /// A currently unused marker value.
+    pub marker: u32,
+}
+
+impl KernelLoaderMeta {
+    /// Deserializes a meta object from a given reader.
+    pub fn read(mut data: &[u8]) -> io::Result<Self> {
+        Ok(Self {
+            magic: data.read_u32::<LE>()?,
+            version: data.read_u32::<LE>()?,
+            marker: data.read_u32::<LE>()?,
+        })
+    }
+
+    /// Gets the binary size of the meta object.
+    pub fn size(&self) -> usize {
+        let size = size_of::<u32>() * 3;
+        assert_eq!(size, 0xC);
+        size
+    }
+
+    /// Serializes the meta object to a given writer.
+    pub fn write<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
+        writer.write_u32::<LE>(self.magic)?;
+        writer.write_u32::<LE>(self.version)?;
+        writer.write_u32::<LE>(self.marker)?;
 
         Ok(())
     }

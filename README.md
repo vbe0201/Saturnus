@@ -5,14 +5,20 @@ that is used in the Nintendo Switch.
 
 ## About
 
-The original Horizon kernel is written in modern C++ using a design heavily based on
-reference-counted C++ objects. It has a custom IPC system and the full system is split
-up into many sandboxed processes beyond the actual kernel. Few design choices from UNIX
-and POSIX are borrowed.
+The original Horizon kernel is written in modern C++, using a recent LLVM toolchain.
 
-This project tries to combine Horizon's secure design with the capabilities Rust
-provides us with to achieve a semantically equivalent reimplementation of the original
-kernel that is capable to serve as a drop-in replacement on real hardware.
+It is a fully custom design heavily based around reference-counted C++ object. Using
+a custom IPC system, most of the work in the system is orchestrated between sandboxed
+processes following a microservice model.
+
+This project tries to combine Horizon's modern design choices with the capabilities
+Rust provides as a systems programming language.
+
+We try to achieve semantic equivalence in reimplementation, less effort is put in
+trying to generate matching assembly. Nonetheless, it is a goal for the kernel to
+work as a drop-in replacement on real hardware.
+
+Eventually, it may be ported to more architectures than just AArch64 in the future.
 
 ## Code Organisation
 
@@ -20,36 +26,37 @@ TODO: Write me.
 
 ## Building and Testing
 
-TODO: Write me.
+The `cargo kernel` command shall be used for building and testing Saturnus.
+
+Most commonly, one will want to use the `cargo kernel -t aarch64-qemu run --release`
+which builds the Kernel for the `aarch64-qemu` target and runs it in QEMU.
+
+The `build` and `run` commands will always produce a ready kernel image as
+`target/dist/kernel.bin`.
+
+See `cargo kernel help` for a full list of usable commands and their options.
 
 ### Testing
 
-TODO: Write once we have proper tests
+TODO: Write once we have proper tests.
+
+## Porting
+
+TODO: Write me.
 
 ## Contributing
 
-As a research project and the required familiarity with the mechanics of the proprietary
-kernel we're reimplementing, this project is unlikely to accept significant code
-contributions from people that are not project developers without prior bikeshedding
-discussion.
-
-Code quality improvements, additional documentation and bugfixes to the existing codebase
-are encouraged and heavily appreciated anytime!
+Due to the required familiarity with the mechanics of the proprietary kernel that
+is being reimplemented here, this project is unlikely to accept significant code
+contributions from outsiders without prior bikeshedding discussion.
 
 ## License
 
-Saturnus notably consists of two major components:
+Saturnus consists of many small crates which compose the full kernel.
 
-- The kernel and its corresponding bootstrap loader under [`saturnus/`](./saturnus/)
+Generally, each of these crates may be licensed under either the
+[ISC License](./LICENSE-ISC) or the [GNu GPLv2](./LICENSE-GPL).
 
-- The library ecosystem under [`crates/`](./crates/)
-
-Generally speaking, we'd like to keep most of the generic library ecosystem reusable
-in the embedded space. As such, we dual-license it under the terms of either the
-Apache License (Version 2.0) or the MIT license, at the user's choice. See
-[LICENSE-APACHE](./LICENSE-APACHE) and [LICENSE-MIT](./LICENSE-MIT) for details.
-
-Code that reimplements mechanisms specific to Horizon OS is licensed under the terms
-of the GNU General Public License v2. See [`LICENSE-GPL`](./LICENSE-GPL) for more details.
-
-Review the `Cargo.toml` file of each crate to learn about specific licensing.
+See the `Cargo.toml` file of a particular crate to learn its license. All
+code in a crate shall be licensed under the license stated there unless
+where specifically noted.

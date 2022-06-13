@@ -10,7 +10,7 @@ pub fn check(sh: &Shell, pkg: &Package, target: &Target, release: bool) -> Resul
 
     let release_arg = if release { &["--release"][..] } else { &[] };
     let cargo_name = pkg.cargo_name;
-    let triple = target.llvm_triple;
+    let target_json = target.target_json;
     let features = &["--no-default-features", "--features", target.board];
 
     // Check the requested package using cargo.
@@ -19,7 +19,7 @@ pub fn check(sh: &Shell, pkg: &Package, target: &Target, release: bool) -> Resul
         "cargo check
             {release_arg...}
             -p {cargo_name}
-            --target {triple}
+            --target {target_json}
             {features...}
             -Zbuild-std=core,alloc,compiler_builtins"
     )

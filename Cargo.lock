@@ -69,6 +69,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cfg-if"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
 name = "clap"
 version = "3.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -237,10 +243,16 @@ checksum = "f3f6f92acf49d1b98f7a81226834412ada05458b7364277387724a237f062695"
 [[package]]
 name = "saturnus-kernel"
 version = "0.1.0"
+dependencies = [
+ "cfg-if",
+]
 
 [[package]]
 name = "saturnus-kernel-loader"
 version = "0.1.0"
+dependencies = [
+ "cfg-if",
+]
 
 [[package]]
 name = "semver"

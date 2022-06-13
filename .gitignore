@@ -25,3 +25,6 @@ Thumbs.db
 *.i64
 *.nam
 *.til
+
+# Build output
+/link.ld

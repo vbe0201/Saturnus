@@ -9,14 +9,28 @@ use anyhow::{bail, Result};
 pub struct Target {
     /// The name of the target.
     pub name: &'static str,
-    /// The corresponding LLVM target triple.
-    pub llvm_triple: &'static str,
+    /// The targeted architecture.
+    pub arch: &'static str,
+    /// The corresponding target definition file.
+    pub target_json: &'static str,
     /// The board we're building for.
     pub board: &'static str,
 }
 
 const TARGETS: &[Target] = &[
-    // TODO: Populate this.
+    Target {
+        name: "aarch64-qemu",
+        arch: "aarch64",
+        target_json: "build/targets/aarch64-saturnus-qemu.json",
+        board: "qemu",
+    },
+    // TODO: Make this a thing.
+    //Target {
+    //    name: "aarch64-nintendo-nx",
+    //    arch: "aarch64",
+    //    target_json: "aarch64-saturnus-nintendo_nx.json",
+    //    board: "nx",
+    //},
 ];
 
 /// Attempts to find a [`Target`] by name.
@@ -32,8 +46,8 @@ pub fn all_targets() -> impl Iterator<Item = &'static Target> {
 /// Gets the QEMU parts for emulation of a given [`Target`],
 /// if supported.
 pub fn qemu_parts(target: &Target) -> Result<(&'static str, &'static [&'static str])> {
-    match target {
-        // TODO: Populate this.
+    match target.name {
+        "aarch64-qemu" => Ok(("aarch64", &["-cpu", "cortex-a57"])),
         _ => bail!("target does not support QEMU emulation"),
     }
 }

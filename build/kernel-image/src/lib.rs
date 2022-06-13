@@ -8,7 +8,7 @@
 //! It is used by the `xtask` crate for the build command.
 
 use std::{
-    fs::{self, File},
+    fs,
     io::{Seek, SeekFrom, Write},
     iter,
     path::Path,
@@ -30,6 +30,7 @@ pub struct ImageBuilder {
     kernel_meta: (usize, KernelMeta),
 
     loader: Vec<u8>,
+    loader_meta: (usize, KernelLoaderMeta),
 
     kips: Vec<u8>,
     kip_count: u8,
@@ -81,7 +82,29 @@ impl ImageBuilder {
     /// Loads a raw Kernel Loader binary from the given path and
     /// stores it.
     pub fn with_loader<P: AsRef<Path>>(mut self, path: P) -> Result<Self> {
-        self.loader = fs::read(path)?;
+        let loader = fs::read(path)?;
+
+        // We try to find the metadata offset for the loader first.
+        // However, it must not be at 0 because the image needs to
+        // begin with executable code. At the same time, it is fair
+        // to assume it's a logic bug when metadata are *too* far in.
+        let finder = memmem::Finder::new(KERNEL_LOADER_MAGIC);
+        let meta_offset = match finder.find(&loader) {
+            Some(off) if off == 0 || off > 0x10 => {
+                bail!("suspicious metadata offset found; please confirm")
+            }
+            Some(off) => off,
+            None => panic!("Malformed kernel binary!"),
+        };
+
+        // Now deserialize the full kernel loader meta blob.
+        let meta = KernelLoaderMeta::read(&loader[meta_offset..])?;
+        assert_eq!(meta.magic, u32::from_le_bytes(*KERNEL_LOADER_MAGIC));
+        assert_eq!(meta.marker, 0xCCCCCCCC);
+
+        self.loader = loader;
+        self.loader_meta = (meta_offset, meta);
+
         Ok(self)
     }
 
@@ -132,13 +155,17 @@ impl ImageBuilder {
             align_up(ini1_end, 0x1000) + if ini1_header_len == 0 { 0x1000 } else { 0 };
         let loader_end = loader_start + self.loader.len();
 
-        // Update our header accordingly.
+        // Update our headers accordingly.
         self.kernel_meta.1.ini1_base = ini1_start as u64;
         self.kernel_meta.1.loader_base = loader_start as u64;
         self.kernel_meta.1.version = self.version;
+        self.loader_meta.1.version = self.version;
 
         // Now build the resulting output binary.
-        let mut output = File::open(outfile)?;
+        let mut output = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(outfile)?;
         {
             // Write the initial bits of kernel code.
             output.write_all(&self.kernel[..self.kernel_meta.0])?;
@@ -154,9 +181,15 @@ impl ImageBuilder {
             output.write_all(&ini1_header.unwrap_or_default())?;
             output.write_all(&self.kips)?;
 
-            // Write the Kernel Loader blob.
+            // Write the initial bits of loader code.
             output.seek(SeekFrom::Start(loader_start as u64))?;
-            output.write_all(&self.loader)?;
+            output.write_all(&self.loader[..self.loader_meta.0])?;
+
+            // Re-serialize the loader metadata.
+            self.loader_meta.1.write(&mut output)?;
+
+            // Write the remaining bits of loader code.
+            output.write_all(&self.loader[(self.loader_meta.0 + self.loader_meta.1.size())..])?;
 
             // Append trailing padding at an aligned image end.
             output.seek(SeekFrom::Start(align_up(loader_end, 0x1000) as u64))?;

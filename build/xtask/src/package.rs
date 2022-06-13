@@ -3,13 +3,13 @@
 /// The Kernel package in the Saturnus workspace.
 pub const KERNEL: Package = Package {
     name: "kernel",
-    cargo_name: "kernel",
+    cargo_name: "saturnus-kernel",
 };
 
 /// The Kernel Loader package in the Saturnus workspace.
 pub const KERNEL_LOADER: Package = Package {
     name: "loader",
-    cargo_name: "kernel-loader",
+    cargo_name: "saturnus-kernel-loader",
 };
 
 /// Definition of a Saturnus package to build.

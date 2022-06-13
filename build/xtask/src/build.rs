@@ -1,6 +1,6 @@
 //! Implementation of the build system action `build`.
 
-use std::{fs, io::BufReader, path::PathBuf};
+use std::{io::BufReader, path::PathBuf};
 
 use anyhow::{anyhow, Result};
 use xshell::{cmd, Shell};
@@ -28,9 +28,12 @@ pub fn build_kernel(sh: &Shell, target: &Target, release: bool) -> Result<PathBu
         let mut root = rustc::project_root();
         root.push("target");
         root.push("dist");
+
+        root = sh.create_dir(root)?;
+        root.push("kernel.bin");
+
         root
     };
-    fs::create_dir_all(&image_path)?;
 
     // TODO: Add support for baking in KIPs.
     kernel_image::ImageBuilder::default()
@@ -47,8 +50,13 @@ fn build(sh: &Shell, pkg: &Package, target: &Target, release: bool) -> Result<Pa
 
     let release_arg = if release { &["--release"][..] } else { &[] };
     let cargo_name = pkg.cargo_name;
-    let triple = target.llvm_triple;
+    let target_json = target.target_json;
     let features = &["--no-default-features", "--features", target.board];
+
+    // Before we start, copy the requested linker script over.
+    // This is done to establish a standard target jsons can refer to.
+    let linker_script = format!("build/linker-scripts/{}-{}.ld", target.arch, pkg.name);
+    sh.copy_file(linker_script, "link.ld")?;
 
     // Build the requested package using cargo.
     let output = cmd!(
@@ -56,12 +64,15 @@ fn build(sh: &Shell, pkg: &Package, target: &Target, release: bool) -> Result<Pa
         "cargo build
             {release_arg...}
             -p {cargo_name}
-            --target {triple}
+            --target {target_json}
             {features...}
             -Zbuild-std=core,alloc,compiler_builtins
             --message-format=json-render-diagnostics"
     )
     .output()?;
+
+    // Now that we're done, remove the previously copied linker script.
+    sh.remove_path("link.ld")?;
 
     // Try to extract the produced ELF binary for successful builds.
     let artifact_path = extract_build_artifact(&output.stdout)

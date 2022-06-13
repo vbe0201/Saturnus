@@ -3,6 +3,8 @@
 
 use core::panic::PanicInfo;
 
+mod arch;
+
 #[inline(never)]
 #[panic_handler]
 fn panic(_: &PanicInfo<'_>) -> ! {
