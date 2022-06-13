@@ -38,18 +38,56 @@ __saturnus_kernel_layout:
 
 // fn __saturnus_bootstrap_kernel(...)
 //
-// TODO: Document this.
+// This is responsible for bootstrapping the Kernel on the CPU
+// core 0 we're initially executing on.
+//
+// It is responsible for ensuring the kernel runs under EL1,
+// disabling the MMU and caches, executing the Kernel Loader to
+// set up KASLR and finally invoke the actual kernel entrypoint.
 //
 .section .r0.text, "ax", %progbits
 .global __saturnus_bootstrap_kernel
 .type   __saturnus_bootstrap_kernel, %function
 __saturnus_bootstrap_kernel:
+    // Mask all interrupts.
+    msr daifset, #0xF
+
+    // Stash arguments away for later use.
+    mov x19, x0
+    mov x20, x1
+
+    // Load the current EL we're executing under.
+    mrs x1, currentel
+
+    // Check if we're running under EL1.
+    cmp x1, #0x4
+    b.eq 1f
+
+    // Check if we're running under EL2.
+    cmp x1, #0x8
+    b.eq 0f
+
+    // We're running under EL3 at this point.
+    // This is a broken invariant in our design so we will abort.
+    bl __saturnus_panic_when_in_el3
+
+0:
+    // We're currently running under EL2.
+    // We will choose to just deprivilege ourselves.
+    // TODO
+
+1:
+    // We're running under EL1 now.
+    // TODO
+
     // Compute the Kernel Loader entry point in memory and call it
     // with the following arguments:
     //
     //  - x0: The Kernel base address in memory.
     //  - x1: The Kernel layout map `__saturnus_kernel_layout`.
     //  - x2: The base address of the embedded INI1 resource.
+    //
+    // It returns its page allocator state in X0 for us to re-use.
     adr x0, __saturnus_start
     adr x1, __saturnus_kernel_layout
     LOAD_LABEL_ADDR x2, x0, __saturnus_ini1_base

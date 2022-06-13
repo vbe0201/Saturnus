@@ -37,6 +37,7 @@ pub fn build_kernel(sh: &Shell, target: &Target, release: bool) -> Result<PathBu
 
     // TODO: Add support for baking in KIPs.
     kernel_image::ImageBuilder::default()
+        .with_page_size(0x1000) // TODO: Make this configurable.
         .with_loader(kernel_loader)?
         .with_kernel(kernel)?
         .with_version(version_major, version_minor, version_patch)

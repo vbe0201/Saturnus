@@ -23,8 +23,6 @@ pub use self::kip::*;
 mod metadata;
 pub use self::metadata::*;
 
-const PAGE_SIZE: usize = 0x1000;
-
 /// The builder for the final Kernel Image.
 #[derive(Default)]
 pub struct ImageBuilder {
@@ -38,9 +36,17 @@ pub struct ImageBuilder {
     kip_count: u8,
 
     version: u32,
+
+    page_size: usize,
 }
 
 impl ImageBuilder {
+    /// Stores the page size that is used by the kernel.
+    pub fn with_page_size(mut self, page_size: usize) -> Self {
+        self.page_size = page_size;
+        self
+    }
+
     /// Loads a raw Kernel binary from the given path and
     /// stores it.
     pub fn with_kernel<P: AsRef<Path>>(mut self, path: P) -> Result<Self> {
@@ -149,12 +155,12 @@ impl ImageBuilder {
         let ini1_header_len = ini1_header.as_ref().map(|h| h.len()).unwrap_or(0);
 
         // Calculate the start and end offsets of the INI1 segment.
-        let ini1_start = align_up(self.kernel_meta.1.layout.kernel_end as usize, PAGE_SIZE);
+        let ini1_start = align_up(self.kernel_meta.1.layout.kernel_end as usize, self.page_size);
         let ini1_end = ini1_start + ini1_header_len + self.kips.len();
 
         // Calculate the start and end offsets of the Kernel Loader.
         let loader_start =
-            align_up(ini1_end, PAGE_SIZE) + if ini1_header_len == 0 { PAGE_SIZE } else { 0 };
+            align_up(ini1_end, self.page_size) + if ini1_header_len == 0 { self.page_size } else { 0 };
         let loader_end = loader_start + self.loader.len();
 
         // Update our headers accordingly.
@@ -194,8 +200,8 @@ impl ImageBuilder {
             output.write_all(&self.loader[(self.loader_meta.0 + self.loader_meta.1.size())..])?;
 
             // Append trailing padding at an aligned image end.
-            output.seek(SeekFrom::Start(align_up(loader_end, PAGE_SIZE) as u64))?;
-            output.write_all(&vec![0; PAGE_SIZE])?;
+            output.seek(SeekFrom::Start(align_up(loader_end, self.page_size) as u64))?;
+            output.write_all(&vec![0; self.page_size])?;
         }
 
         Ok(())
