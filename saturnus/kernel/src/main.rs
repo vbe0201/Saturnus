@@ -1,3 +1,4 @@
+#![feature(optimize_attribute)]
 #![no_std]
 #![no_main]
 

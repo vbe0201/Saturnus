@@ -2,3 +2,5 @@
 //!
 //! Everything is re-exported by the unifying
 //! [`crate::arch`] module.
+
+pub mod r0;

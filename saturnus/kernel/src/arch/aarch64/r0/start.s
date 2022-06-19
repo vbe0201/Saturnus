@@ -12,7 +12,7 @@
 .section .r0.text.start, "ax", %progbits
 .global __saturnus_start
 __saturnus_start:
-    b __saturnus_bootstrap_kernel
+    b bootstrap_kernel
 
 // The Saturnus KernelMeta structure. See the `kernel-image`
 // crate for details. Make sure these two are always in sync.
@@ -46,9 +46,9 @@ __saturnus_kernel_layout:
 // set up KASLR and finally invoke the actual kernel entrypoint.
 //
 .section .r0.text, "ax", %progbits
-.global __saturnus_bootstrap_kernel
-.type   __saturnus_bootstrap_kernel, %function
-__saturnus_bootstrap_kernel:
+.global bootstrap_kernel
+.type   bootstrap_kernel, %function
+bootstrap_kernel:
     // Mask all interrupts.
     msr daifset, #0xF
 
@@ -68,13 +68,13 @@ __saturnus_bootstrap_kernel:
     b.eq 0f
 
     // We're running under EL3 at this point.
-    // This is a broken invariant in our design so we will abort.
-    bl __saturnus_panic_when_in_el3
+    // Let the responsible routine decide how to proceed.
+    bl handle_running_under_el3
 
 0:
     // We're currently running under EL2.
-    // We will choose to just deprivilege ourselves.
-    // TODO
+    // Let the responsible routine decide how to proceed.
+    bl handle_running_under_el2
 
 1:
     // We're running under EL1 now.
@@ -87,7 +87,7 @@ __saturnus_bootstrap_kernel:
     //  - x1: The Kernel layout map `__saturnus_kernel_layout`.
     //  - x2: The base address of the embedded INI1 resource.
     //
-    // It returns its page allocator state in X0 for us to re-use.
+    // Loader returns its page allocator state in X0 for us to reuse.
     adr x0, __saturnus_start
     adr x1, __saturnus_kernel_layout
     LOAD_LABEL_ADDR x2, x0, __saturnus_ini1_base
