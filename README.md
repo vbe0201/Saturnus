@@ -55,7 +55,7 @@ contributions from outsiders without prior bikeshedding discussion.
 Saturnus consists of many small crates which compose the full kernel.
 
 Generally, each of these crates may be licensed under either the
-[ISC License](./LICENSE-ISC) or the [GNu GPLv2](./LICENSE-GPL).
+[ISC License](./LICENSE-ISC) or the [GNU GPLv2](./LICENSE-GPL).
 
 See the `Cargo.toml` file of a particular crate to learn its license. All
 code in a crate shall be licensed under the license stated there unless
