@@ -9,6 +9,7 @@ edition = "2021"
 
 [dependencies]
 cfg-if = "1.0"
+config = { package = "saturnus-config", path = "../config", default-features = false }
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 semihosting = { package = "saturnus-semihosting", path = "../../crates/semihosting" }
@@ -16,4 +17,4 @@ semihosting = { package = "saturnus-semihosting", path = "../../crates/semihosti
 [features]
 default = []
 
-qemu = []
+qemu = ["config/qemu"]

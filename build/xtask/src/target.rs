@@ -15,6 +15,8 @@ pub struct Target {
     pub target_json: &'static str,
     /// The board we're building for.
     pub board: &'static str,
+    /// The build configuration for this target.
+    pub config: &'static saturnus_config::Config,
 }
 
 const TARGETS: &[Target] = &[
@@ -23,6 +25,7 @@ const TARGETS: &[Target] = &[
         arch: "aarch64",
         target_json: "build/targets/aarch64-saturnus-qemu.json",
         board: "qemu",
+        config: &saturnus_config::AARCH64_QEMU,
     },
     // TODO: Make this a thing.
     //Target {
@@ -30,6 +33,7 @@ const TARGETS: &[Target] = &[
     //    arch: "aarch64",
     //    target_json: "aarch64-saturnus-nintendo_nx.json",
     //    board: "nx",
+    //    config: &saturnus_config::AARCH64_NINTENDO_NX,
     //},
 ];
 

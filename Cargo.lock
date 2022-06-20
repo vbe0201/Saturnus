@@ -250,11 +250,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3f6f92acf49d1b98f7a81226834412ada05458b7364277387724a237f062695"
 
 [[package]]
+name = "saturnus-config"
+version = "0.1.0"
+
+[[package]]
 name = "saturnus-kernel"
 version = "0.1.0"
 dependencies = [
  "cfg-if",
  "cortex-a",
+ "saturnus-config",
  "saturnus-semihosting",
  "tock-registers",
 ]
@@ -264,6 +269,7 @@ name = "saturnus-kernel-loader"
 version = "0.1.0"
 dependencies = [
  "cfg-if",
+ "saturnus-config",
  "saturnus-semihosting",
 ]
 
@@ -416,5 +422,6 @@ dependencies = [
  "clap",
  "kernel-image",
  "rustc_version",
+ "saturnus-config",
  "xshell",
 ]
