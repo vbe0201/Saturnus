@@ -35,10 +35,10 @@ const PARTNUM_CORTEX_A57: u64 = 0xD07;
 /// # Safety
 ///
 /// This is hardware land. Use cautiously.
-#[cfg(feature = "qemu")]
 #[naked]
 #[no_mangle]
 pub unsafe extern "C" fn handle_running_under_el2() -> ! {
+    #[cfg(feature = "qemu")]
     asm!(
         r#"
         // Back up the current link register in a callee-saved register.
@@ -58,7 +58,7 @@ pub unsafe extern "C" fn handle_running_under_el2() -> ! {
         flush_entire_data_cache_and_invalidate_tlb = sym flush_entire_data_cache_and_invalidate_tlb,
         prepare_el2_to_el1_transition = sym prepare_el2_to_el1_transition,
         options(noreturn)
-    )
+    );
 }
 
 /// Handles the execution of the Kernel under EL3.
@@ -79,7 +79,6 @@ extern "C" fn handle_running_under_el3() -> ! {
     panic!("Kernel is running under EL3!")
 }
 
-#[inline(always)]
 unsafe extern "C" fn prepare_el2_to_el1_transition(ret_addr: u64) {
     let midr = MIDR_EL1.extract();
 
