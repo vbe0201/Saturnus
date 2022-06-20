@@ -13,16 +13,15 @@
 //! The implementations are stackless so they can be used in
 //! early bootstrap context.
 
-use cortex_a::{
-    asm::eret,
-    registers::{ACTLR_EL2, ELR_EL2, HCR_EL2, LR, MIDR_EL1, SPSR_EL2},
-};
+use core::arch::asm;
+
+use cortex_a::registers::{ACTLR_EL2, ELR_EL2, HCR_EL2, MIDR_EL1, SPSR_EL2};
 use tock_registers::interfaces::{Readable, Writeable};
 
-use super::cache;
+use super::cache::flush_entire_data_cache_and_invalidate_tlb;
 
-const PARTNUM_CORTEX_A_53: u64 = 0xD03;
-const PARTNUM_CORTEX_A_57: u64 = 0xD07;
+const PARTNUM_CORTEX_A53: u64 = 0xD03;
+const PARTNUM_CORTEX_A57: u64 = 0xD07;
 
 /// Handles the execution of the Kernel under EL2.
 ///
@@ -36,27 +35,30 @@ const PARTNUM_CORTEX_A_57: u64 = 0xD07;
 /// # Safety
 ///
 /// This is hardware land. Use cautiously.
-#[no_mangle]
-#[optimize(speed)]
-pub unsafe extern "C" fn handle_running_under_el2() -> ! {
-    handle_running_under_el2_impl()
-}
-
-// Under EL2 in QEMU, we will just deprivilege ourselves.
 #[cfg(feature = "qemu")]
-#[inline(always)]
-unsafe fn handle_running_under_el2_impl() -> ! {
-    // First, set up for returning to current link register in EL1.
-    ELR_EL2.set(LR.get());
+#[naked]
+#[no_mangle]
+pub unsafe extern "C" fn handle_running_under_el2() -> ! {
+    asm!(
+        r#"
+        // Back up the current link register in a callee-saved register.
+        mov x24, lr
 
-    // Next, flush the data cache and invalidate the entire TLB.
-    cache::flush_entire_data_cache_and_invalidate_tlb();
+        // Flush the data cache and invalidate the entire TLB.
+        bl {flush_entire_data_cache_and_invalidate_tlb}
 
-    // Then, set up system registers accordingly for transition.
-    prepare_el2_to_el1_transition();
+        // Prepare system registers for deprivileging to EL1.
+        // We want to jump to this function's return address.
+        mov x1, x24
+        bl {prepare_el2_to_el1_transition}
 
-    // Lastly, jump back in EL1.
-    eret()
+        // Lastly, return back to the caller under EL1.
+        eret
+    "#,
+        flush_entire_data_cache_and_invalidate_tlb = sym flush_entire_data_cache_and_invalidate_tlb,
+        prepare_el2_to_el1_transition = sym prepare_el2_to_el1_transition,
+        options(noreturn)
+    )
 }
 
 /// Handles the execution of the Kernel under EL3.
@@ -72,21 +74,20 @@ unsafe fn handle_running_under_el2_impl() -> ! {
 ///
 /// This is hardware land. Use cautiously.
 #[no_mangle]
-#[optimize(speed)]
 extern "C" fn handle_running_under_el3() -> ! {
     // Panics are configured not to unwind the stack.
     panic!("Kernel is running under EL3!")
 }
 
 #[inline(always)]
-unsafe fn prepare_el2_to_el1_transition() {
+unsafe extern "C" fn prepare_el2_to_el1_transition(ret_addr: u64) {
     let midr = MIDR_EL1.extract();
 
     // Check if we're running on Cortex-A53 or Cortex-A57 processors and
     // configure implementation-defined registers if that's the case.
     if midr.matches_all(MIDR_EL1::Implementer::Arm)
-        && (midr.read(MIDR_EL1::PartNum) == PARTNUM_CORTEX_A_57
-            || midr.read(MIDR_EL1::PartNum) == PARTNUM_CORTEX_A_53)
+        && (midr.read(MIDR_EL1::PartNum) == PARTNUM_CORTEX_A57
+            || midr.read(MIDR_EL1::PartNum) == PARTNUM_CORTEX_A53)
     {
         // TODO: Proper bitfield.
         //  - CPUACTLR access control = SET
@@ -104,4 +105,7 @@ unsafe fn prepare_el2_to_el1_transition() {
 
     // Set up a simulated exception return by masking all interrupts.
     SPSR_EL2.write(SPSR_EL2::M::EL1h + SPSR_EL2::F::Masked + SPSR_EL2::I::Masked);
+
+    // Set up for returning to the supplied address in EL1.
+    ELR_EL2.set(ret_addr);
 }

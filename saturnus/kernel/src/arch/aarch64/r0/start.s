@@ -78,7 +78,9 @@ bootstrap_kernel:
 
 1:
     // We're running under EL1 now.
-    // TODO
+
+    // Disable the MMU and the instruction/data caches.
+    bl flush_disable_mmu_and_caches
 
     // Compute the Kernel Loader entry point in memory and call it
     // with the following arguments:
@@ -93,3 +95,27 @@ bootstrap_kernel:
     LOAD_LABEL_ADDR x2, x0, __saturnus_ini1_base
     LOAD_LABEL_ADDR x3, x0, __saturnus_kernel_loader_base
     blr x3
+
+// fn flush_disable_mmu_and_caches()
+//
+// Flushes the data cache, invalidates the instruction cache and
+// disables both caches along with the Memory Management Unit.
+//
+// This will flush the data cache and invalidate the instruction
+// cache before fully disabling both of them along with the MMU.
+.section .r0.text, "ax", %progbits
+.global flush_disable_mmu_and_caches
+.type   flush_disable_mmu_and_caches, %function
+flush_disable_mmu_and_caches:
+    // Back up our link register in a callee-saved register.
+    mov x22, lr
+
+    // Flush the data cache and invalidate the entire TLB.
+    bl flush_entire_data_cache_and_invalidate_tlb
+
+    // Invalidate the caches and disable the MMU.
+    bl disable_mmu_and_caches
+
+    // Restore the saved link register and return to the caller.
+    mov lr, x22
+    ret

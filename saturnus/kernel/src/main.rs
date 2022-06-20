@@ -1,4 +1,4 @@
-#![feature(optimize_attribute)]
+#![feature(asm_sym, naked_functions)]
 #![no_std]
 #![no_main]
 

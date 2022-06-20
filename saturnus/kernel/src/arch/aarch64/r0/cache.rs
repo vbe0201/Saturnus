@@ -19,18 +19,32 @@ use tock_registers::interfaces::{Readable, Writeable};
 /// # Safety
 ///
 /// This is hardware land. Use cautiously.
+#[naked]
 #[no_mangle]
-#[optimize(speed)]
 pub unsafe extern "C" fn flush_entire_data_cache_and_invalidate_tlb() {
-    // Make sure that the full data cache is coherent.
-    flush_entire_data_cache_local();
-    flush_entire_data_cache_shared();
-    flush_entire_data_cache_local();
+    asm!(
+        r#"
+        // Back up our return address in a callee-saved register.
+        mov x23, lr
 
-    // Invalidate the entire TLB.
-    asm!("tlbi vmalle1is", options(nostack));
-    dsb(SY);
-    isb(SY);
+        // Ensure full data cache coherency.
+        bl {flush_entire_data_cache_local}
+        bl {flush_entire_data_cache_shared}
+        bl {flush_entire_data_cache_local}
+
+        // Invalidate the entire TLB.
+        tlbi vmalle1is
+        dsb sy
+        isb
+
+        // Restore the saved link register and return to the caller.
+        mov lr, x23
+        ret
+    "#,
+        flush_entire_data_cache_local = sym flush_entire_data_cache_local,
+        flush_entire_data_cache_shared = sym flush_entire_data_cache_shared,
+        options(noreturn)
+    )
 }
 
 /// Flushes the entire local CPU data cache.
@@ -45,8 +59,8 @@ pub unsafe extern "C" fn flush_entire_data_cache_and_invalidate_tlb() {
 /// # Safety
 ///
 /// This is hardware land. Use cautiously.
-#[optimize(speed)]
-pub unsafe fn flush_entire_data_cache_local() {
+#[no_mangle]
+pub unsafe extern "C" fn flush_entire_data_cache_local() {
     // Flush all the levels of unification in local cache.
     for level in 0..CLIDR_EL1.read(CLIDR_EL1::LoUIS) {
         flush_cache_level(level);
@@ -68,8 +82,8 @@ pub unsafe fn flush_entire_data_cache_local() {
 /// # Safety
 ///
 /// This is hardware land. Use cautiously.
-#[optimize(speed)]
-pub unsafe fn flush_entire_data_cache_shared() {
+#[no_mangle]
+pub unsafe extern "C" fn flush_entire_data_cache_shared() {
     let clidr = CLIDR_EL1.extract();
 
     let levels_of_unification = clidr.read(CLIDR_EL1::LoUIS);
