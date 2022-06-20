@@ -3,6 +3,8 @@ members = [
     "build/kernel-image",
     "build/xtask",
 
+    "crates/*",
+
     "saturnus/*",
 ]
 

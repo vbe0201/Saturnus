@@ -255,6 +255,7 @@ version = "0.1.0"
 dependencies = [
  "cfg-if",
  "cortex-a",
+ "saturnus-semihosting",
  "tock-registers",
 ]
 
@@ -263,7 +264,12 @@ name = "saturnus-kernel-loader"
 version = "0.1.0"
 dependencies = [
  "cfg-if",
+ "saturnus-semihosting",
 ]
+
+[[package]]
+name = "saturnus-semihosting"
+version = "0.1.0"
 
 [[package]]
 name = "semver"
