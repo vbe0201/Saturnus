@@ -9,7 +9,7 @@ cfg_if::cfg_if! {
         mod aarch64;
         pub use self::aarch64::*;
 
-        ::core::arch::global_asm!(include_str!("aarch64/start.s"));
+        ::core::arch::global_asm!(include_str!("aarch64/r0/start.s"));
     } else {
         compile_error!("Attempted to build for unsupported target architecture!");
     }

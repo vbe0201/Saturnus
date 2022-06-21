@@ -67,7 +67,8 @@ fn build(sh: &Shell, pkg: &Package, target: &Target, release: bool) -> Result<Pa
             -p {cargo_name}
             --target {target_json}
             {features...}
-            -Zbuild-std=core,alloc,compiler_builtins
+            -Z build-std=core,alloc,compiler_builtins
+            -Z build-std-features=compiler-builtins-mem
             --message-format=json-render-diagnostics"
     )
     .output()?;

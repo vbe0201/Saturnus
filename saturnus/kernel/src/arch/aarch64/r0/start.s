@@ -1,6 +1,6 @@
-// Loads a base memory address from a label into a register
+// Loads a pointed-to address at a label into a register
 // and does the arithmetic to compute the actual address
-// relative to a given base from another register.
+// relative to a given base address from another register.
 .macro LOAD_LABEL_ADDR register, base, symbol
     adr \register, \symbol
     ldr \register, [\register]
@@ -89,7 +89,7 @@ bootstrap_kernel:
     //  - x1: The Kernel layout map `__saturnus_kernel_layout`.
     //  - x2: The base address of the embedded INI1 resource.
     //
-    // Loader returns its page allocator state in X0 for us to reuse.
+    // Loader returns its state in X0 for us to reuse.
     adr x0, __saturnus_start
     adr x1, __saturnus_kernel_layout
     LOAD_LABEL_ADDR x2, x0, __saturnus_ini1_base
