@@ -14,10 +14,10 @@ goblin = { version = "0.5", default-features = false, features = ["elf64"] }
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 cortex-a = "7.4"
-semihosting = { package = "saturnus-semihosting", path = "../../crates/semihosting" }
-tock-registers = { version = "0.7.x", default-features = false }
+semihosting = { package = "saturnus-semihosting", path = "../../crates/semihosting", optional = true }
+tock-registers = "0.7.x"
 
 [features]
 default = []
 
-qemu = ["config/qemu"]
+qemu = ["config/qemu", "semihosting"]

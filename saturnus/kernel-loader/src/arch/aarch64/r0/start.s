@@ -63,10 +63,17 @@ __saturnus_loader_main:
     LOAD_LABEL_ADDR x1, x0, __saturnus_loader_dynamic_start
     bl apply_relocations
 
+    // Setup exception handling for catching runtime errors.
+    msr tpidr_el1, xzr
+    msr cntv_cval_el0, xzr
+    adr x0, __saturnus_start
+    LOAD_LABEL_ADDR x1, x0, __saturnus_loader_vectors_start
+    msr vbar_el1, x1
+    isb
+
     // TODO: Missing logic.
 
-    mov x0, #0x18
-    hlt #0xF000
+    brk 1
 
 .balign 8
 __saturnus_loader_stack_top:

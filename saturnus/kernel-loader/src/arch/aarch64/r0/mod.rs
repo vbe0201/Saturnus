@@ -2,3 +2,5 @@
 //!
 //! This is aping `crt0` and provides the routines needed
 //! to do early loader initialization after it is called.
+
+pub mod exception;
