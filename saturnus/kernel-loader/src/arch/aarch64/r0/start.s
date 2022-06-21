@@ -71,6 +71,9 @@ __saturnus_loader_main:
     msr vbar_el1, x1
     isb
 
+    // Call the loader main routine which sets up KASLR.
+    bl main
+
     // TODO: Missing logic.
 
     brk 1

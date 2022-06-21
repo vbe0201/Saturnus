@@ -5,3 +5,8 @@
 mod arch;
 mod panic;
 mod reloc;
+
+#[no_mangle]
+extern "C" fn main() {
+    todo!()
+}
