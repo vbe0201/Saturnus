@@ -11,7 +11,7 @@ mod board;
 mod panic;
 mod reloc;
 
-const PAGE_SIZE: usize = config::CURRENT_BUILD.unwrap().page_size as usize;
+const BUILD_CONFIG: config::Config = config::CURRENT_BUILD.unwrap();
 
 /// The layout of Kernel binary sections in memory.
 ///
@@ -54,12 +54,30 @@ unsafe extern "C" fn main(
     let kernel_layout = &*kernel_layout;
 
     // Validate the kernel layout.
-    assert!(is_aligned(kernel_layout.text_start as _, PAGE_SIZE));
-    assert!(is_aligned(kernel_layout.text_end as _, PAGE_SIZE));
-    assert!(is_aligned(kernel_layout.rodata_start as _, PAGE_SIZE));
-    assert!(is_aligned(kernel_layout.rodata_end as _, PAGE_SIZE));
-    assert!(is_aligned(kernel_layout.data_start as _, PAGE_SIZE));
-    assert!(is_aligned(kernel_layout.bss_end as _, PAGE_SIZE));
+    assert!(is_aligned(
+        kernel_layout.text_start as _,
+        BUILD_CONFIG.page_size
+    ));
+    assert!(is_aligned(
+        kernel_layout.text_end as _,
+        BUILD_CONFIG.page_size
+    ));
+    assert!(is_aligned(
+        kernel_layout.rodata_start as _,
+        BUILD_CONFIG.page_size
+    ));
+    assert!(is_aligned(
+        kernel_layout.rodata_end as _,
+        BUILD_CONFIG.page_size
+    ));
+    assert!(is_aligned(
+        kernel_layout.data_start as _,
+        BUILD_CONFIG.page_size
+    ));
+    assert!(is_aligned(
+        kernel_layout.bss_end as _,
+        BUILD_CONFIG.page_size
+    ));
 
     todo!()
 }
