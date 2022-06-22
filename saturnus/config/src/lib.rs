@@ -14,7 +14,7 @@
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Config {
     /// The fixed page size that is used.
-    pub page_size: u64,
+    pub page_size: usize,
 }
 
 /// The configuration that covers the current build.

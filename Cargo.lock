@@ -289,11 +289,16 @@ dependencies = [
  "goblin",
  "saturnus-config",
  "saturnus-semihosting",
+ "saturnus-utils",
  "tock-registers",
 ]
 
 [[package]]
 name = "saturnus-semihosting"
+version = "0.1.0"
+
+[[package]]
+name = "saturnus-utils"
 version = "0.1.0"
 
 [[package]]

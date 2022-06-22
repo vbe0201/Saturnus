@@ -22,9 +22,9 @@ __saturnus_loader_marker:
     .word 0xCCCCCCCC
 
 // fn __saturnus_loader_main(
-//     kernel_base: usize,
+//     kernel_base: *mut u8,
 //     kernel_layout: *const KernelLayout,
-//     ini1_base: usize,
+//     ini1_base: *mut u8,
 // )
 //
 // This routine is responsible for doing the loader's own runtime
@@ -55,7 +55,7 @@ __saturnus_loader_main:
 
     // Back up our arguments and the link register on the stack.
     sub sp, sp, #0x20
-    stp x0, x1, [sp, #0x00] // Store `kernel_base` and `kernel_map`.
+    stp x0, x1, [sp, #0x00] // Store `kernel_base` and `kernel_layout`.
     stp x2, lr, [sp, #0x10] // Store `ini1_base` and link register.
 
     // Apply all dynamic relocations to ourselves.
@@ -72,6 +72,8 @@ __saturnus_loader_main:
     isb
 
     // Call the loader main routine which sets up KASLR.
+    ldp x0, x1, [sp, #0x00] // Restore `kernel_base` and `kernel_layout`.
+    ldr x2,     [sp, #0x10] // Restore `ini1_base`.
     bl main
 
     // TODO: Missing logic.

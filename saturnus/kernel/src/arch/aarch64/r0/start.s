@@ -16,6 +16,7 @@ __saturnus_start:
 
 // The Saturnus KernelMeta structure. See the `kernel-image`
 // crate for details. Make sure these two are always in sync.
+// Note that the KernelLdr also maintains a copy of `KernelLayout`.
 __saturnus_magic:
     .ascii "SKN0"
 __saturnus_ini1_base:
