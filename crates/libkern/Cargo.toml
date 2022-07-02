@@ -1,0 +1,18 @@
+[package]
+name = "saturnus-libkern"
+version = "0.1.0"
+authors = ["Valentin B. <valentin.be@protonmail.com>"]
+description = "Implementation details of the Kernel and its loader"
+license = "GPL-2.0"
+repository = "https://github.com/vbe0201/Saturnus.git"
+edition = "2021"
+
+[dependencies]
+cfg-if = "1.0"
+config = { package = "saturnus-config", path = "../../build/config", default-features = false }
+utils = { package = "saturnus-utils", path = "../utils" }
+
+[features]
+default = []
+
+qemu = ["config/qemu"]

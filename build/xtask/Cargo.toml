@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 kernel-image = { path = "../kernel-image" }
-saturnus-config = { path = "../../saturnus/config" }
+saturnus-config = { path = "../../build/config" }
 
 anyhow = "1"
 cargo_metadata = "0.14"

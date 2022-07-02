@@ -287,10 +287,19 @@ dependencies = [
  "cfg-if",
  "cortex-a",
  "goblin",
- "saturnus-config",
+ "saturnus-libkern",
  "saturnus-semihosting",
  "saturnus-utils",
  "tock-registers",
+]
+
+[[package]]
+name = "saturnus-libkern"
+version = "0.1.0"
+dependencies = [
+ "cfg-if",
+ "saturnus-config",
+ "saturnus-utils",
 ]
 
 [[package]]

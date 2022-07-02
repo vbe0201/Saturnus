@@ -35,6 +35,7 @@ const PARTNUM_CORTEX_A57: u64 = 0xD07;
 /// # Safety
 ///
 /// This is hardware land. Use cautiously.
+#[cold]
 #[naked]
 #[no_mangle]
 pub unsafe extern "C" fn handle_running_under_el2() -> ! {
@@ -73,6 +74,7 @@ pub unsafe extern "C" fn handle_running_under_el2() -> ! {
 /// # Safety
 ///
 /// This is hardware land. Use cautiously.
+#[cold]
 #[no_mangle]
 extern "C" fn handle_running_under_el3() -> ! {
     // Panics are configured not to unwind the stack.

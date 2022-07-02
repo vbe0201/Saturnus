@@ -1,17 +1,16 @@
-#![feature(const_option, naked_functions, strict_provenance)]
+#![feature(naked_functions, strict_provenance)]
 #![no_std]
 #![no_main]
 
 use core::{mem::size_of, ptr};
 
+use libkern::BUILD_CONFIG;
 use utils::align::is_aligned;
 
 mod arch;
 mod board;
 mod panic;
 mod reloc;
-
-const BUILD_CONFIG: config::Config = config::CURRENT_BUILD.unwrap();
 
 /// The layout of Kernel binary sections in memory.
 ///
