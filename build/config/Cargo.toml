@@ -1,0 +1,15 @@
+[package]
+name = "saturnus-config"
+version = "0.1.0"
+authors = ["Valentin B. <valentin.be@protonmail.com>"]
+description = "Kernel configuration for supported build targets"
+license = "GPL-2.0"
+repository = "https://github.com/vbe0201/Saturnus.git"
+edition = "2021"
+
+[dependencies]
+
+[features]
+default = []
+
+qemu = []

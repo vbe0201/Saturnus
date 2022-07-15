@@ -2,29 +2,17 @@
 name = "saturnus-libkern"
 version = "0.1.0"
 authors = ["Valentin B. <valentin.be@protonmail.com>"]
-description = "A library for unifying shared kernel code."
+description = "Implementation details of the Kernel and its loader"
 license = "GPL-2.0"
-repository = "https://github.com/vbe0201/Saturnus"
-keywords = ["kernel", "library"]
-categories = ["no-std", "embedded"]
+repository = "https://github.com/vbe0201/Saturnus.git"
 edition = "2021"
 
 [dependencies]
-libutils = { package = "saturnus-libutils", path = "../libutils" }
-lock_api = { version = "0.4.5", features = ["nightly"] }
-
-static_assertions = "1.0"
-tock-registers = { version = "0.7.x", default-features = false }
-
-[target.'cfg(target_arch = "aarch64")'.dependencies]
-cortex-a = { package = "saturnus-cortex-a", path = "../cortex-a" }
-saturnus-smc = { path = "../smc", optional = true }
-
-[target.'cfg(not(target_arch = "aarch64"))'.dependencies.spin]
-version = "0.9.2"
-default-features = false
-features = ["mutex", "use_ticket_mutex", "lock_api"]
+cfg-if = "1.0"
+config = { package = "saturnus-config", path = "../../build/config", default-features = false }
+utils = { package = "saturnus-utils", path = "../utils" }
 
 [features]
-# Builds the kernel library for the Nintendo Switch (codename NX)
-bsp-nintendo-nx = ["saturnus-smc"]
+default = []
+
+qemu = ["config/qemu"]

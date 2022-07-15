@@ -1,19 +1,17 @@
-//! A library for unifying shared kernel code.
 //!
-//! Code in this library is either:
-//!
-//! * re-used between kernel and loader simultaneously
-//!
-//! * generic enough to be usable outside of the kernel itself.
 
+#![feature(ptr_as_uninit, strict_provenance)]
 #![no_std]
-#![allow(incomplete_features, unreachable_patterns)]
-#![deny(rustdoc::broken_intra_doc_links)]
-#![feature(const_fn_trait_bound, const_mut_refs, generic_const_exprs)]
 
-pub mod bsp;
-pub mod critical_section;
+pub use config::Config;
+
+mod arch;
+
+pub mod addr;
 pub mod init;
-pub mod irq;
-pub mod spin;
-pub mod system_control;
+
+/// The build configuration for the currently configured target.
+pub const BUILD_CONFIG: Config = match config::CURRENT_BUILD {
+    Some(config) => config,
+    None => panic!("Building libkern with unsupported target configuration"),
+};

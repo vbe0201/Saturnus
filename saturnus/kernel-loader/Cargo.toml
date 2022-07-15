@@ -1,0 +1,24 @@
+[package]
+name = "saturnus-kernel-loader"
+version = "0.1.0"
+authors = ["Valentin B. <valentin.be@protonmail.com>"]
+description = "Bootstrap loader for the Saturnus kernel"
+license = "GPL-2.0"
+repository = "https://github.com/vbe0201/Saturnus.git"
+edition = "2021"
+
+[dependencies]
+cfg-if = "1.0"
+goblin = { version = "0.5", default-features = false, features = ["elf64"] }
+libkern = { package = "saturnus-libkern", path = "../../crates/libkern" }
+utils = { package = "saturnus-utils", path = "../../crates/utils" }
+
+[target.'cfg(target_arch = "aarch64")'.dependencies]
+cortex-a = "7.4"
+semihosting = { package = "saturnus-semihosting", path = "../../crates/semihosting", optional = true }
+tock-registers = "0.7.x"
+
+[features]
+default = []
+
+qemu = ["libkern/qemu", "semihosting"]

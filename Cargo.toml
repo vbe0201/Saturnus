@@ -1,20 +1,21 @@
 [workspace]
 members = [
+    "build/config",
+    "build/kernel-image",
+    "build/xtask",
+
     "crates/*",
 
-    "kernel",
-    "kernel/loader",
-
-    "xtask",
+    "saturnus/*",
 ]
 
 [profile.release]
 debug = true
 codegen-units = 1
-opt-level = "s"
+opt-level = 3
 lto = "fat"
 
-# We override the `opt-level` in debug builds because somehow
-# we segfault rustc or LLVM when building with `0` opt-level
 [profile.dev]
-opt-level = 1
+opt-level = "s"
+overflow-checks = false
+lto = "thin"

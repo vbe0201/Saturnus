@@ -1,22 +1,24 @@
 # Saturnus
 
-An open-source reimplementation of the modern RTOS microkernel "HorizonKernel" that is
-used in the Nintendo Switch.
+An open-source reimplementation of the proprietary RTOS microkernel "HorizonKernel"
+that is used in the Nintendo Switch.
 
 ## About
 
-The original Horizon kernel is written in modern C++ using a design heavily based on
-reference-counted C++ objects. As a microkernel, it has a custom IPC system and being
-a custom design, it has zero POSIX compatibility elements.
+The original Horizon kernel is written in modern C++, using a recent LLVM toolchain.
 
-A combination of these factors makes up for a very interesting research project to see
-how well the Rust language can handle the design of this kernel in its essence, while
-also providing semantic equivalence to the original kernel.
+It is a fully custom design heavily based around reference-counted C++ object. Using
+a custom IPC system, most of the work in the system is orchestrated between sandboxed
+processes following a microservice model.
 
-That being said, the goal is not to generate matching binaries to the original but to
-have an idiomatic open source reference of this masterpiece while pushing Rust's boundaries
-and exploring the capabilities of this language in the process. Maybe we will also extinguish
-Linux from the world of embedded software for good as a side effect.
+This project tries to combine Horizon's modern design choices with the capabilities
+Rust provides as a systems programming language.
+
+We try to achieve semantic equivalence in reimplementation, less effort is put in
+trying to generate matching assembly. Nonetheless, it is a goal for the kernel to
+work as a drop-in replacement on real hardware.
+
+Eventually, it may be ported to more architectures than just AArch64 in the future.
 
 ## Code Organisation
 
@@ -24,68 +26,37 @@ TODO: Write me.
 
 ## Building and Testing
 
-### Dependencies and `cargo-xtask`
+The `cargo kernel` command shall be used for building and testing Saturnus.
 
-Saturnus uses [cargo-xtask] as it's build system which can be invoked by running `cargo xtask`
-in the project directory. Execute `cargo xtask help` to see all possible commands xtask can execute.
+Most commonly, one will want to use the `cargo kernel -t aarch64-qemu run --release`
+which builds the Kernel for the `aarch64-qemu` target and runs it in QEMU.
 
-This has the advantage that the only dependency required to build Saturnus is Rust itself and all the
-components of the Rust toolchain specified in the `rust-toolchain.toml` file. These will automatically
-be installed by [rustup] if you enter the project directory.
+The `build` and `run` commands will always produce a ready kernel image as
+`target/dist/kernel.bin`.
 
-### Building and Running
-
-To build and run the Saturnus Kernel in [QEMU] execute the following command
-```bash
-cargo kernel run --release
-```
-
-`cargo kernel` is an alias for `cargo xtask -p kernel` (see [`.cargo/config.toml`](./.cargo/config.toml) for all aliases)
-and thus can be used to execute each action provided by `xtask`:
-
-```bash
-# Only build the kernel in debug mode
-cargo kernel build
-
-# Run one of the LLVM bintools on the produced kernel binary
-cargo kernel llvm size
-```
-
-Since Saturnus is composed of multiple packages, all these commands also work for other packages
-(e.g. the `loader`: `cargo loader build` / `cargo xtask -p loader build`).
-
-For a complete and up-to-date overview run `cargo xtask help`.
+See `cargo kernel help` for a full list of usable commands and their options.
 
 ### Testing
 
-TODO: Write once we have proper tests
+TODO: Write once we have proper tests.
+
+## Porting
+
+TODO: Write me.
 
 ## Contributing
 
-Because of the official status as a research project and the required familiarity with the
-original system, this project is unlikely to accept significant code contributions from people
-that are not project developers without prior bikeshedding discussion.
-
-Code quality improvements, additional documentation and bugfixes to the existing codebase
-are encouraged and heavily appreciated anytime!
+Due to the required familiarity with the mechanics of the proprietary kernel that
+is being reimplemented here, this project is unlikely to accept significant code
+contributions from outsiders without prior bikeshedding discussion.
 
 ## License
 
-Saturnus notably consists of the Kernel itself and its corresponding bootstrap loader, which
-can be found under [`kernel/`](./kernel/), and its library ecosystem under
-[`crates/`](./crates/).
+Saturnus consists of many small crates which compose the full kernel.
 
-The kernel and its loader are licensed under the terms of the GNU General Public License v2.
-See [`LICENSE-GPL`](./LICENSE-GPL) for more details.
+Generally, each of these crates may be licensed under either the
+[ISC License](./LICENSE-ISC) or the [GNU GPLv2](./LICENSE-GPL).
 
-The library ecosystem, on the other hand, is designed to be re-usable in the world of embedded
-Cortex-A, and is therefore dual-licensed under the terms of either the Apache License
-(Version 2.0) or the MIT license, at the user's choice. See [LICENSE-APACHE](./LICENSE-APACHE)
-and [LICENSE-MIT](./LICENSE-MIT) for details.
-
-Contributions to a specific component of the Saturnus project must be made under the terms of
-all licenses it is governed by.
-
-[cargo-xtask]: https://github.com/matklad/cargo-xtask/
-[QEMU]: https://www.qemu.org/
-[rustup]: https://rustup.rs
+See the `Cargo.toml` file of a particular crate to learn its license. All
+code in a crate shall be licensed under the license stated there unless
+where specifically noted.

@@ -1,0 +1,10 @@
+[package]
+name = "saturnus-utils"
+version = "0.1.0"
+authors = ["Valentin B. <valentin.be@protonmail.com>"]
+description = "Common utilities used throughout the project"
+license = "ISC"
+repository = "https://github.com/vbe0201/Saturnus.git"
+edition = "2021"
+
+[dependencies]

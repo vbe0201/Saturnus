@@ -11,17 +11,19 @@ pub struct HostStream {
 }
 
 impl HostStream {
-    /// Attempts to construct a new handle to the host's standard output and returns it.
+    /// Attempts to construct a new handle to the host's standard
+    /// output and returns it.
     #[allow(clippy::result_unit_err)]
     pub fn stdout() -> Result<Self, ()> {
         open(":tt\0", ops::open::W_TRUNC)
     }
 
-    /// Attempts to construct a new handle to the host's standard error and returns it.
+    /// Attempts to construct a new handle to the host's standard
+    /// error and returns it.
     #[allow(clippy::result_unit_err)]
     pub fn stderr() -> Result<Self, ()> {
-        // There is actually no stderr access in ARM Semihosting documentation.
-        // Use convention used in libgloss:
+        // There is no real stderr access in ARM Semihosting documentation.
+        // We therefore use the same convention as libgloss:
         // https://sourceware.org/git/?p=newlib-cygwin.git;a=blob;f=libgloss/arm/syscalls.c#l176
         open(":tt\0", ops::open::W_APPEND)
     }
@@ -55,8 +57,8 @@ fn write_all(fd: usize, mut buffer: &[u8]) -> Result<(), ()> {
 
             // `n` bytes were not written.
             n if n <= buffer.len() => {
-                let offset = (buffer.len() - n) as isize;
-                buffer = unsafe { slice::from_raw_parts(buffer.as_ptr().offset(offset), n) }
+                let offset = buffer.len() - n;
+                buffer = unsafe { slice::from_raw_parts(buffer.as_ptr().add(offset), n) };
             }
 
             // Error
